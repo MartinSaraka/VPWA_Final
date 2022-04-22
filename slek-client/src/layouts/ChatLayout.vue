@@ -134,7 +134,7 @@
               v-else
               clickable
               v-ripple
-              :to="{ name: 'Channels', params: { id: index } }"
+              :to="{ name: 'Channel', params: { id: index } }"
               :active="channel === activeChannel"
               @click="setActiveChannel(channel)"
             >
@@ -530,19 +530,30 @@ export default defineComponent({
     },
 
     async send () {
-      this.loading = true
-      await this.addMessage({
-        channel: this.activeChannel,
-        message: this.message
-      })
-      this.message = ''
-      this.loading = false
+      if (this.message.length > 0) {
+        this.loading = true
+
+        if (this.message.startsWith('/')) {
+          await this.serveCommand({
+            channel: this.activeChannel,
+            message: this.message
+          })
+        } else {
+          await this.addMessage({
+            channel: this.activeChannel,
+            message: this.message
+          })
+        }
+        this.message = ''
+        this.loading = false
+      }
     },
     ...mapMutations('channels', {
       setActiveChannel: 'SET_ACTIVE'
     }),
     ...mapActions('auth', ['logout']),
-    ...mapActions('channels', ['addMessage'])
+    ...mapActions('channels', ['addMessage']),
+    ...mapActions('channels', ['serveCommand'])
   }
 })
 </script>

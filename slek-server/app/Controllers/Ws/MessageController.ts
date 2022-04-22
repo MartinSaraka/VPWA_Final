@@ -1,6 +1,8 @@
 import type { WsContextContract } from '@ioc:Ruby184/Socket.IO/WsContext'
 import type { MessageRepositoryContract } from '@ioc:Repositories/MessageRepository'
 import { inject } from '@adonisjs/core/build/standalone'
+import User from 'App/Models/User'
+import Channel from 'App/Models/Channel'
 
 // inject repository from container to controller constructor
 // we do so because we can extract database specific storage to another class
@@ -12,6 +14,10 @@ import { inject } from '@adonisjs/core/build/standalone'
 export default class MessageController {
   constructor (private messageRepository: MessageRepositoryContract) {}
 
+  private getUserRoom(user: User): string {
+    return `user:${user.id}`
+  }
+
   public async loadMessages({ params }: WsContextContract) {
     return this.messageRepository.getAll(params.name)
   }
@@ -22,5 +28,16 @@ export default class MessageController {
     socket.broadcast.emit('message', message)
     // return message to sender
     return message
+  }
+
+  public async serveCommand({ params, socket, auth }: WsContextContract, command: string) {
+    console.log(command)
+    if (command == "/list"){
+      // to do...
+    }
+
+    // TO DO all commands ...
+
+    return null
   }
 }
