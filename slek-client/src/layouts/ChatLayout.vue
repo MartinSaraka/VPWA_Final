@@ -134,8 +134,8 @@
               v-else
               clickable
               v-ripple
-              :to="{ name: 'Channel', params: { id: index } }"
-              :active="channel.name === link"
+              :to="{ name: 'Channels', params: { id: index } }"
+              :active="channel === activeChannel"
               @click="setActiveChannel(channel)"
             >
               <q-item-section avatar>
@@ -505,7 +505,6 @@ export default defineComponent({
       leftDrawerOpen: false,
       rightDrawerOpen: false,
       statePick: 'online',
-      link: '',
       notificationsDialog: false,
       notificationOptions: 'one',
       notificationsDialog1: false,
