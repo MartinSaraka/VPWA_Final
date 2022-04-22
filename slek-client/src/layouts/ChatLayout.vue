@@ -1,99 +1,495 @@
 <template>
-  <div class="WAL position-relative bg-grey-4" :style="{ height: $q.screen.height + 'px' }">
-    <q-layout view="lHh Lpr lFf" class="WAL__layout shadow-3" container>
-      <q-header elevated>
-        <q-toolbar class="bg-grey-3 text-black">
-          <q-btn
-            round
-            flat
-            icon="keyboard_arrow_left"
-            class="WAL__drawer-open q-mr-sm"
-            @click="leftDrawerOpen = !leftDrawerOpen"
-          />
+  <q-layout view="lHh LpR lFr">
+    <q-header elevated class="bg-primary text-white">
+      <q-toolbar>
+        <q-btn dense flat round icon="menu" @click="toggleLeftDrawer" />
 
-          <q-btn round flat>
-            <q-avatar color="primary" text-color="white">G</q-avatar>
-          </q-btn>
+        <q-toolbar-title class="text-center">
+          {{ activeChannel }}
+        </q-toolbar-title>
 
-          <span class="q-subtitle-1 q-pl-md">
-            {{ activeChannel }}
-          </span>
-        </q-toolbar>
-      </q-header>
+        <q-btn class="q-mr-xl" color="blue" @click="notificationsDialog = true">
+          Notifications
+          <q-badge class="q-ml-sm" color="red" right>7</q-badge>
+        </q-btn>
+        <q-btn
+          class="q-mr-sm"
+          round
+          color="white"
+          text-color="primary"
+          icon="group"
+          @click="toggleRightDrawer"
+        />
+      </q-toolbar>
+    </q-header>
 
-      <q-drawer
-        v-model="leftDrawerOpen"
-        show-if-above
-        bordered
-        :breakpoint="690"
+    <q-drawer show-if-above v-model="leftDrawerOpen" side="left">
+      <q-img
+        class="absolute-top bg-blue"
+        src="https://cdn.quasar.dev/img/material.png"
+        style="height: 200px"
       >
-        <q-toolbar class="bg-grey-3">
-          <q-avatar class="cursor-pointer">
-            <img src="https://cdn.quasar.dev/logo-v2/svg/logo.svg" />
-          </q-avatar>
+        <div class="absolute-top bg-transparent column items-center">
+          <div class="column items-center">
+            <q-avatar rounded size="48px">
+              <img src="https://cdn.quasar.dev/img/avatar1.jpg" />
+              <q-badge
+                v-if="statePick === 'online'"
+                floating
+                rounded
+                color="green"
+              />
+              <q-badge
+                v-if="statePick === 'dnd'"
+                floating
+                rounded
+                color="yellow-10"
+              />
+              <q-badge
+                v-if="statePick === 'offline'"
+                floating
+                rounded
+                color="grey-6"
+              />
+            </q-avatar>
+            <div class="text-h6 ellipsis">Jakub</div>
+          </div>
 
-          <q-space />
+          <q-list class="column items-center">
+            <q-item>
+              <q-btn-toggle
+                v-model="statePick"
+                push
+                glossy
+                color="white"
+                text-color="primary"
+                toggle-color="primary"
+                toggle-text-color="white"
+                :options="[
+                  { label: 'Online', value: 'online' },
+                  { label: 'DND', value: 'dnd' },
+                  { label: 'Offline', value: 'offline' },
+                ]"
+              />
+            </q-item>
 
-          <q-btn round flat icon="more_vert">
-            <q-menu auto-close :offset="[110, 8]">
-              <q-list style="min-width: 150px">
-                <q-item clickable @click="logout">
-                  <q-item-section>Logout</q-item-section>
-                </q-item>
-              </q-list>
-            </q-menu>
-          </q-btn>
+            <q-item>
+              <q-btn
+                color="white"
+                @click="logout"
+                text-color="primary"
+                label="Logout"
+              />
+            </q-item>
+          </q-list>
+        </div>
+      </q-img>
+      <q-scroll-area
+        style="
+          height: calc(100% - 200px);
+          margin-top: 200px;
+          border-right: 1px solid #ddd;
+        "
+      >
+        <q-list>
+          <q-item>
+            <q-item-section
+              ><q-btn
+                color="blue "
+                label="Create channel"
+                icon="create"
+                @click="notificationsDialog1 = true"
+              />
+            </q-item-section>
+          </q-item>
 
-          <q-btn
-            round
-            flat
-            icon="close"
-            class="WAL__drawer-close"
-            @click="leftDrawerOpen = !leftDrawerOpen"
-          />
-        </q-toolbar>
+          <q-separator inset />
 
-        <q-scroll-area style="height: calc(100% - 100px)">
-          <q-list>
+          <q-item class="text-center">
+            <q-item-section> Channels </q-item-section>
+          </q-item>
+
+          <q-separator inset />
+
+          <template v-for="(channel, index) in channels" :key="index">
             <q-item
-              v-for="(channel, index) in channels"
-              :key="index"
+              v-if="channel.isTopped"
               clickable
               v-ripple
-              @click="setActiveChannel(channel)"
+              @click="invitedDialog = true"
             >
-              <q-item-section>
-                <q-item-label lines="1">
-                  {{ channel }}
-                </q-item-label>
-                <q-item-label class="conversation__summary" caption>
-                  {{ lastMessageOf(channel)?.content || '' }}
-                </q-item-label>
+              <q-item-section avatar>
+                <q-icon color="red" :name="channel.icon" />
               </q-item-section>
 
-              <q-item-section side>
-                <!--q-item-label caption>
-                  {{ channel }}
-                </q-item-label-->
-                <q-icon name="keyboard_arrow_down" />
+              <q-item-section>
+                {{ channel.name }}
+              </q-item-section>
+              <q-badge class="q-mr-sm" align="middle" color="red">
+                INVITED
+              </q-badge>
+            </q-item>
+
+            <q-item
+              v-else
+              clickable
+              v-ripple
+              :to="{ name: 'Channel', params: { id: index } }"
+              :active="channel.name === link"
+              @click="setActiveChannel(channel)"
+            >
+              <q-item-section avatar>
+                <q-icon :name="lock" />
+                <!-- TO DO -->
+              </q-item-section>
+              <q-item-section>
+                {{ channel }}
+              </q-item-section>
+            </q-item>
+          </template>
+        </q-list>
+      </q-scroll-area>
+    </q-drawer>
+
+    <q-drawer width="250" v-model="rightDrawerOpen" side="right" bordered>
+      <div class="column items-center">
+        <q-btn
+          class="q-mt-md"
+          style="width: 80%"
+          color="primary"
+          icon="exit_to_app"
+          label="Leave channel"
+        />
+        <q-btn
+          class="q-my-md"
+          style="width: 80%"
+          color="primary"
+          icon="delete_forever"
+          label="Delete channel"
+        />
+      </div>
+
+      <q-separator inset />
+
+      <div align="center" class="text-h6 text-weight-bold q-py-sm">Members</div>
+
+      <q-separator inset />
+
+      <q-list class="q-pb-xl">
+        <q-item clickable v-ripple class="q-mt-sm q-pl-lg text-center">
+          <q-item-section avatar>
+            <q-avatar rounded>
+              <img src="https://cdn.quasar.dev/img/avatar1.jpg" />
+              <q-badge floating rounded color="green" />
+            </q-avatar>
+          </q-item-section>
+          <q-item-section class="text-center text-subtitle1"
+            >Jakub</q-item-section
+          >
+          <q-item-section avatar>
+            <q-icon
+              name="admin_panel_settings"
+              class="text-primary vertical-middle text-center"
+              size="md"
+            />
+          </q-item-section>
+        </q-item>
+
+        <q-item clickable v-ripple class="q-mt-sm q-pl-lg text-center">
+          <q-item-section avatar>
+            <q-avatar rounded>
+              <img src="https://cdn.quasar.dev/img/avatar4.jpg" />
+              <q-badge floating rounded color="grey-6" />
+            </q-avatar>
+          </q-item-section>
+          <q-item-section class="text-center text-subtitle1"
+            >Martin</q-item-section
+          >
+          <q-item-section avatar>
+            <q-icon
+              name="account_circle"
+              class="text-primary vertical-middle text-center"
+              size="md"
+            />
+          </q-item-section>
+        </q-item>
+
+        <q-item
+          v-for="index in 10"
+          :key="index"
+          clickable
+          v-ripple
+          class="q-mt-sm q-pl-lg text-center"
+        >
+          <q-item-section avatar>
+            <q-avatar rounded>
+              <img src="https://cdn.quasar.dev/img/avatar5.jpg" />
+              <q-badge floating rounded color="yellow-10" />
+            </q-avatar>
+          </q-item-section>
+          <q-item-section class="text-center text-subtitle1"
+            >Radka</q-item-section
+          >
+          <q-item-section avatar>
+            <q-icon
+              name="account_circle"
+              class="text-primary vertical-middle text-center"
+              size="md"
+            />
+          </q-item-section>
+        </q-item>
+      </q-list>
+
+      <div class="bg-white absolute-bottom">
+        <q-separator inset />
+
+        <div class="row justify-center">
+          <q-chip
+            size="lg"
+            icon="admin_panel_settings"
+            text-color="primary"
+            color="white"
+          >
+            Admin
+          </q-chip>
+
+          <q-chip
+            size="lg"
+            icon="account_circle"
+            text-color="primary"
+            color="white"
+          >
+            User
+          </q-chip>
+        </div>
+      </div>
+    </q-drawer>
+
+    <q-page-container>
+      <router-view />
+    </q-page-container>
+
+    <q-footer>
+        <q-toolbar class="bg-grey-1 text-black row">
+    <q-input
+        v-model="message"
+        :disable="loading"
+        @keydown.enter.prevent="send"
+        rounded
+        outlined
+        dense
+        class="col-grow q-my-md q-my-sm"
+        standout="bg-grey-3 text-white"
+        placeholder="Type a message"
+    >
+      <template v-slot:append>
+        <q-btn clas="q-ml-sm" dense flat icon="send" :disable="loading" @click="send" />
+      </template>
+
+      <template v-slot:prepend>
+        <q-btn
+          class="q-mr-sm"
+          flat
+          round
+          size="md"
+          color="primary"
+          icon="info"
+          to="/"
+        />
+      </template>
+    </q-input>
+        </q-toolbar>
+    </q-footer>
+
+    <q-dialog v-model="notificationsDialog">
+      <q-card style="width: 700px; max-width: 80vw">
+        <q-card-actions align="right" class="q-mb-none">
+          <q-btn dense flat icon="close" v-close-popup>
+            <q-tooltip>Close</q-tooltip>
+          </q-btn>
+        </q-card-actions>
+
+        <q-card-section align="center">
+          <div class="text-h5 ellipsis">Notifications</div>
+        </q-card-section>
+
+        <q-separator class="q-mb-sm" />
+
+        <q-scroll-area style="height: 250px; border-right: 1px solid #ddd">
+          <q-list>
+            <q-item clickable>
+              <q-item-section>
+                <q-item-label
+                  >Majka sent u message (aaaa....) 3 mins ago</q-item-label
+                >
+              </q-item-section>
+            </q-item>
+
+            <q-item clickable>
+              <q-item-section>
+                <q-item-label
+                  >Majka sent u message (yyyyyy....) 2 mins ago</q-item-label
+                >
+              </q-item-section>
+            </q-item>
+
+            <q-item clickable>
+              <q-item-section>
+                <q-item-label
+                  >Majka sent u message (xxxxx....) 1 mins ago</q-item-label
+                >
+              </q-item-section>
+            </q-item>
+
+            <q-item clickable>
+              <q-item-section>
+                <q-item-label
+                  >Majka sent u message (xxxxx....) 1 mins ago</q-item-label
+                >
+              </q-item-section>
+            </q-item>
+
+            <q-item clickable>
+              <q-item-section>
+                <q-item-label
+                  >Majka sent u message (xxxxx....) 1 mins ago</q-item-label
+                >
+              </q-item-section>
+            </q-item>
+
+            <q-item clickable>
+              <q-item-section>
+                <q-item-label
+                  >Majka sent u message (xxxxx....) 1 mins ago</q-item-label
+                >
+              </q-item-section>
+            </q-item>
+
+            <q-item clickable>
+              <q-item-section>
+                <q-item-label
+                  >Majka sent u message (xxxxx....) 1 mins ago</q-item-label
+                >
               </q-item-section>
             </q-item>
           </q-list>
         </q-scroll-area>
-      </q-drawer>
 
-      <q-page-container class="bg-grey-2">
-        <router-view />
-      </q-page-container>
+        <q-separator />
+        <q-card-section align="center">
+          <q-btn-toggle
+            v-model="notificationOptions"
+            push
+            toggle-color="primary"
+            :options="[
+              { value: 'one', slot: 'one' },
+              { value: 'two', slot: 'two' },
+            ]"
+          >
+            <template v-slot:one>
+              <div class="row items-center no-wrap">
+                <q-icon left name="circle" color="green" />
+                <div class="text-center">All notifications</div>
+              </div>
+            </template>
 
-      <q-footer>
-        <q-toolbar class="bg-grey-3 text-black row">
-          <q-input v-model="message" :disable="loading" @keydown.enter.prevent="send" rounded outlined dense class="WAL__field col-grow q-mr-sm" bg-color="white" placeholder="Type a message" />
-          <q-btn :disable="loading" @click="send" round flat icon="send" />
-        </q-toolbar>
-      </q-footer>
-    </q-layout>
-  </div>
+            <template v-slot:two>
+              <div class="row items-center no-wrap">
+                <q-icon
+                  left
+                  name="do_not_disturb_on_total_silence"
+                  color="yellow-10"
+                />
+                <div class="text-center">Only tagged messages notificatons</div>
+              </div>
+            </template>
+          </q-btn-toggle>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="notificationsDialog1">
+      <q-card style="width: 700px; max-width: 80vw">
+        <q-card-actions align="right" class="q-mb-none">
+          <q-btn dense flat icon="close" v-close-popup>
+            <q-tooltip>Close</q-tooltip>
+          </q-btn>
+        </q-card-actions>
+
+        <q-card-section align="center">
+          <div class="text-h5 ellipsis">Create your own channel</div>
+        </q-card-section>
+
+        <q-card-section align="center">
+          <q-btn-toggle
+            v-model="notificationOptions1"
+            push
+            toggle-color="primary"
+            :options="[
+              { value: 'one', slot: 'one' },
+              { value: 'two', slot: 'two' },
+            ]"
+          >
+            <template v-slot:one>
+              <div class="row items-center no-wrap">
+                <q-icon left name="public" />
+                <div class="text-center">Public</div>
+              </div>
+            </template>
+
+            <template v-slot:two>
+              <div class="row items-center no-wrap">
+                <q-icon left name="lock" />
+                <div class="text-center">Private</div>
+              </div>
+            </template>
+          </q-btn-toggle>
+        </q-card-section>
+        <div class="q-pa-md flex justify-center">
+          <q-input rounded outlined v-model="text" label="Channel name" />
+        </div>
+
+        <q-separator />
+        <div class="flex justify-center q-pa-md">
+          <q-btn
+            v-close-popup
+            color="blue "
+            label="Create channel"
+            icon="create"
+            rounded
+          />
+        </div>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="invitedDialog">
+      <q-card style="width: 700px; max-width: 80vw">
+        <q-card-actions align="right" class="q-mb-none">
+          <q-btn dense flat icon="close" v-close-popup>
+            <q-tooltip>Close</q-tooltip>
+          </q-btn>
+        </q-card-actions>
+
+        <q-card-section align="center">
+          <div class="q-mt-md text-h5 ellipsis">
+            You were invited to VPWA channel
+          </div>
+        </q-card-section>
+
+        <q-card-section>
+          <div class="q-mt-md q-mb-md row justify-evenly">
+            <q-btn
+              v-close-popup
+              color="primary"
+              icon="check_circle"
+              label="Accept"
+            />
+            <q-btn v-close-popup color="red" icon="cancel" label="Decline" />
+          </div>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+  </q-layout>
 </template>
 
 <script lang="ts">
@@ -104,9 +500,17 @@ export default defineComponent({
   name: 'ChatLayout',
   data () {
     return {
-      leftDrawerOpen: false,
       message: '',
-      loading: false
+      loading: false,
+      leftDrawerOpen: false,
+      rightDrawerOpen: false,
+      statePick: 'online',
+      link: '',
+      notificationsDialog: false,
+      notificationOptions: 'one',
+      notificationsDialog1: false,
+      notificationOptions1: 'one',
+      invitedDialog: false
     }
   },
   computed: {
@@ -119,9 +523,19 @@ export default defineComponent({
     }
   },
   methods: {
+    toggleLeftDrawer () {
+      this.leftDrawerOpen = !this.leftDrawerOpen
+    },
+    toggleRightDrawer () {
+      this.rightDrawerOpen = !this.rightDrawerOpen
+    },
+
     async send () {
       this.loading = true
-      await this.addMessage({ channel: this.activeChannel, message: this.message })
+      await this.addMessage({
+        channel: this.activeChannel,
+        message: this.message
+      })
       this.message = ''
       this.loading = false
     },
@@ -133,45 +547,3 @@ export default defineComponent({
   }
 })
 </script>
-
-<style lang="sass">
-.WAL
-  width: 100%
-  height: 100%
-  padding-top: 20px
-  padding-bottom: 20px
-  &:before
-    content: ''
-    height: 127px
-    position: fixed
-    top: 0
-    width: 100%
-    background-color: #009688
-  &__layout
-    margin: 0 auto
-    z-index: 4000
-    height: 100%
-    width: 90%
-    max-width: 950px
-    border-radius: 5px
-  &__field.q-field--outlined .q-field__control:before
-    border: none
-  .q-drawer--standard
-    .WAL__drawer-close
-      display: none
-@media (max-width: 850px)
-  .WAL
-    padding: 0
-    &__layout
-      width: 100%
-      border-radius: 0
-@media (min-width: 691px)
-  .WAL
-    &__drawer-open
-      display: none
-.conversation__summary
-  margin-top: 4px
-.conversation__more
-  margin-top: 0!important
-  font-size: 1.4rem
-</style>

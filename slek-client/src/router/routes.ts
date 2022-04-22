@@ -10,8 +10,18 @@ const routes: RouteRecordRaw[] = [
     path: '/auth',
     component: () => import('layouts/MainLayout.vue'),
     children: [
-      { path: 'register', name: 'register', meta: { guestOnly: true }, component: () => import('pages/RegisterPage.vue') },
-      { path: 'login', name: 'login', meta: { guestOnly: true }, component: () => import('pages/LoginPage.vue') }
+      {
+        path: 'register',
+        name: 'register',
+        meta: { guestOnly: true },
+        component: () => import('pages/RegisterPage.vue')
+      },
+      {
+        path: 'login',
+        name: 'login',
+        meta: { guestOnly: true },
+        component: () => import('pages/LoginPage.vue')
+      }
     ]
   },
   {
@@ -20,7 +30,11 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
     component: () => import('layouts/ChatLayout.vue'),
     children: [
-      { path: '', name: 'home', component: () => import('src/pages/ChannelPage.vue') }
+      {
+        path: '',
+        name: 'home',
+        component: () => import('src/pages/ChannelPage.vue')
+      }
     ]
   },
 

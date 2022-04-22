@@ -1,15 +1,37 @@
 <template>
   <q-scroll-area ref="area" style="width: 100%; height: calc(100vh - 150px)">
-    <div style="width: 100%; max-width: 400px; margin: 0 auto;">
+        <q-chat-message
+          name="Martin"
+          :avatar="getAvatar('Martin')"
+          bg-color="red"
+          stamp="18.3.2022 at 12:00"
+        >
+          <div><strong>@Jakub</strong> tagnuta sprava je červená</div>
+        </q-chat-message>
+
+    <!-- TO DO         :avatar="avatar" -->
       <q-chat-message v-for="message in messages"
+        class="q-mt-md"
+        text-color="black"
         :key="message.id"
+        :avatar="getAvatar(message.author.email)"
         :name="message.author.email"
         :text="[message.content]"
         :stamp="message.createdAt"
         :sent="isMine(message)"
       />
-    </div>
-  </q-scroll-area>
+
+        <q-chat-message
+          name="Martin"
+          :avatar="getAvatar('Martin')"
+          bg-color="amber"
+        >
+          <div>
+            Martin is typing
+            <q-spinner-dots class="q-ml-sm" size="2rem" />
+          </div>
+        </q-chat-message>
+      </q-scroll-area>
 </template>
 
 <script lang="ts">
@@ -45,6 +67,9 @@ export default defineComponent({
     },
     isMine (message: SerializedMessage): boolean {
       return message.author.id === this.currentUser
+    },
+    getAvatar (email: string) {
+      return 'https://ui-avatars.com/api//?background=0D8ABC&color=fff&name=' + email + '&length=1'
     }
   }
 })
