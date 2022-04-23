@@ -1,4 +1,5 @@
 import BaseSchema from '@ioc:Adonis/Lucid/Schema'
+import { ChannelType } from 'Contracts/enum'
 
 export default class Channels extends BaseSchema {
   protected tableName = 'channels'
@@ -7,9 +8,10 @@ export default class Channels extends BaseSchema {
     this.schema.createTable(this.tableName, (table) => {
       table.increments('id').primary()
       table.string('name').notNullable().unique()
-      /**
-       * Uses timestamptz for PostgreSQL and DATETIME2 for MSSQL
-       */
+      table.enum('type', Object.values(ChannelType))
+      .defaultTo(ChannelType.PUBLIC)
+      .notNullable()
+
       table.timestamp('created_at', { useTz: true })
       table.timestamp('updated_at', { useTz: true })
     })

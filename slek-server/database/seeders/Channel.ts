@@ -1,5 +1,6 @@
 import BaseSeeder from '@ioc:Adonis/Lucid/Seeder'
 import Channel from 'App/Models/Channel'
+import { ChannelType } from 'Contracts/enum'
 
 export default class ChannelSeeder extends BaseSeeder {
   public async run() {
@@ -8,6 +9,7 @@ export default class ChannelSeeder extends BaseSeeder {
     await Channel.updateOrCreateMany(uniqueKey, [
       {
         name: 'general',
+        type: ChannelType.PUBLIC
       },
     ])
   }
