@@ -1,5 +1,6 @@
 import { RawMessage, SerializedMessage } from 'src/contracts'
 import { BootParams, SocketManager } from './SocketManager'
+import { api } from 'src/boot/axios'
 
 // creating instance of this class automatically connects to given socket.io namespace
 // subscribe is called with boot params, so you can use it to dispatch actions for socket events
@@ -38,6 +39,11 @@ class ChannelService {
     const channel = new ChannelSocketManager(`/channels/${name}`)
     this.channels.set(name, channel)
     return channel
+  }
+
+  public async getAll (userId: number) {
+    const channels = await api.get('channel/all/' + userId)
+    return channels.data
   }
 
   public leave (name: string): boolean {
