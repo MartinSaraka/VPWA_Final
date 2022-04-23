@@ -1,4 +1,5 @@
 import BaseSchema from '@ioc:Adonis/Lucid/Schema'
+import { UserChannelRole } from 'Contracts/enum'
 
 export default class ChannelUsers extends BaseSchema {
   protected tableName = 'channel_users'
@@ -21,9 +22,13 @@ export default class ChannelUsers extends BaseSchema {
         .inTable('channels')
         .onDelete('CASCADE')
       table.unique(['user_id', 'channel_id'])
-      /**
-       * Uses timestamptz for PostgreSQL and DATETIME2 for MSSQL
-       */
+
+      table.enum('role', Object.values(UserChannelRole))
+      .defaultTo(UserChannelRole.USER)
+      .notNullable()
+
+      table.timestamp('joined_at', { useTz: true })
+      table.timestamp('banned_at', { useTz: true })
       table.timestamp('created_at', { useTz: true })
       table.timestamp('updated_at', { useTz: true })
     })
