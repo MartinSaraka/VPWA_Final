@@ -12,14 +12,18 @@ class ChannelSocketManager extends SocketManager {
     this.socket.on('message', (message: SerializedMessage) => {
       store.commit('channels/NEW_MESSAGE', { channel, message })
     })
+
+    this.socket.on('leaveChannel', (channel: string) => {
+      store.commit('channels/CLEAR_CHANNEL', channel)
+    })
   }
 
   public addMessage (message: RawMessage): Promise<SerializedMessage> {
     return this.emitAsync('addMessage', message)
   }
 
-  public serveCommand (channel:string, message: RawMessage): Promise<SerializedMessage> {
-    return this.emitAsync('serveCommand', channel, message)
+  public serveCommand (channel:string, message: RawMessage, userId: number): Promise<SerializedMessage> {
+    return this.emitAsync('serveCommand', channel, message, userId)
   }
 
   public loadMessages (): Promise<SerializedMessage[]> {

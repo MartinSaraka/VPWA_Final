@@ -512,7 +512,8 @@ export default defineComponent({
       if (this.rightDrawerOpen) {
         this.serveCommand({
           channel: this.activeChannel,
-          message: '/list'
+          message: '/list',
+          userId: this.$store.state.auth.user?.id
         })
       }
     },
@@ -525,13 +526,15 @@ export default defineComponent({
           if (this.message === '/list') { this.usersList = true }
           await this.serveCommand({
             channel: this.activeChannel,
-            message: this.message
+            message: this.message,
+            userId: this.$store.state.auth.user?.id
           })
           console.log(this.users)
         } else {
           await this.addMessage({
             channel: this.activeChannel,
-            message: this.message
+            message: this.message,
+            userId: this.$store.state.auth.user?.id
           })
         }
         this.message = ''

@@ -31,15 +31,32 @@ export default class MessageController {
     return message
   }
 
-  public async serveCommand({ params, socket, auth }: WsContextContract, channel:string, command: string) {
+  public async serveCommand({ params, socket, auth }: WsContextContract, channel:string, command: string, userId: number) {
     let result;
     if (command === "/list"){
       const channel_db = await Channel.findByOrFail("name", channel)
       result = await User.query().whereHas('channels', (query) => {query.where('channels.id', channel_db.id)})
     }
+    else if (command === "/cancel"){
+      const channel_db = await Channel.findByOrFail("name", channel)
+      const {role} = await Database
+      .from('channel_users')
+      .select('role')
+      .where("channel_users.user_id", userId).first()
 
-    // TO DO all commands ...
+      if (role === 'user'){
+        socket.emit('leaveChannel', channel)
+        const user = await User.findOrFail(userId)
+        await user.related('channels').detach([channel_db.id])
+      }
+      else if(role === 'admin'){
+        socket.nsp.emit("leaveChannel", channel)
+        channel_db.delete()
+      }
+    }
 
-    return result
+    // TO DO other commands...
+
+    return null
   }
 }
