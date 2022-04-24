@@ -28,11 +28,9 @@ const actions: ActionTree<ChannelsStateInterface, StateInterface> = {
     commit('NEW_MESSAGE', { channel, message: newMessage })
   },
   async serveCommand ({ commit }, { channel, message }: { channel: string, message: RawMessage }) {
-    // TO DO...
-
-    const result = await channelService.in(channel)?.serveCommand(message)
-    console.log(result)
-    // commit('NEW_MESSAGE', { channel, message: newMessage })
+    const users = await channelService.in(channel)?.serveCommand(channel, message)
+    commit('SET_USERS', users)
+    return users
   }
 }
 

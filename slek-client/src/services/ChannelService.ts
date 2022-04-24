@@ -18,8 +18,8 @@ class ChannelSocketManager extends SocketManager {
     return this.emitAsync('addMessage', message)
   }
 
-  public serveCommand (message: RawMessage): Promise<SerializedMessage> {
-    return this.emitAsync('serveCommand', message)
+  public serveCommand (channel:string, message: RawMessage): Promise<SerializedMessage> {
+    return this.emitAsync('serveCommand', channel, message)
   }
 
   public loadMessages (): Promise<SerializedMessage[]> {

@@ -119,7 +119,7 @@
               @click="invitedDialog = true"
             >
               <q-item-section avatar>
-                <q-icon color="red" :name="channel.icon" />
+                <q-icon name=channel.type />
               </q-item-section>
 
               <q-item-section>
@@ -139,8 +139,7 @@
               @click="setActiveChannel(channel)"
             >
               <q-item-section avatar>
-                <q-icon :name="lock" />
-                <!-- TO DO -->
+                <q-icon :name="channel.type" />
               </q-item-section>
               <q-item-section>
                 {{ channel }}
@@ -176,68 +175,24 @@
       <q-separator inset />
 
       <q-list class="q-pb-xl">
-        <q-item clickable v-ripple class="q-mt-sm q-pl-lg text-center">
-          <q-item-section avatar>
-            <q-avatar rounded>
-              <img src="https://cdn.quasar.dev/img/avatar1.jpg" />
-              <q-badge floating rounded color="green" />
-            </q-avatar>
-          </q-item-section>
-          <q-item-section class="text-center text-subtitle1"
-            >Jakub</q-item-section
-          >
-          <q-item-section avatar>
-            <q-icon
-              name="admin_panel_settings"
-              class="text-primary vertical-middle text-center"
-              size="md"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item clickable v-ripple class="q-mt-sm q-pl-lg text-center">
-          <q-item-section avatar>
-            <q-avatar rounded>
-              <img src="https://cdn.quasar.dev/img/avatar4.jpg" />
-              <q-badge floating rounded color="grey-6" />
-            </q-avatar>
-          </q-item-section>
-          <q-item-section class="text-center text-subtitle1"
-            >Martin</q-item-section
-          >
-          <q-item-section avatar>
-            <q-icon
-              name="account_circle"
-              class="text-primary vertical-middle text-center"
-              size="md"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          v-for="index in 10"
-          :key="index"
-          clickable
-          v-ripple
-          class="q-mt-sm q-pl-lg text-center"
-        >
-          <q-item-section avatar>
-            <q-avatar rounded>
-              <img src="https://cdn.quasar.dev/img/avatar5.jpg" />
-              <q-badge floating rounded color="yellow-10" />
-            </q-avatar>
-          </q-item-section>
-          <q-item-section class="text-center text-subtitle1"
-            >Radka</q-item-section
-          >
-          <q-item-section avatar>
-            <q-icon
-              name="account_circle"
-              class="text-primary vertical-middle text-center"
-              size="md"
-            />
-          </q-item-section>
-        </q-item>
+        <template v-for="(user, index) in users" :key="index">
+          <q-item clickable v-ripple class="q-mt-sm q-pl-lg text-center">
+            <q-item-section avatar>
+              <q-avatar rounded color="primary" text-color="white">
+                {{user.name[0]}}
+                <q-badge floating rounded color="green" />
+              </q-avatar>
+            </q-item-section>
+            <q-item-section class="text-center text-subtitle1">{{user.name}}</q-item-section>
+            <q-item-section avatar>
+              <q-icon
+                name="admin_panel_settings"
+                class="text-primary vertical-middle text-center"
+                size="md"
+              />
+            </q-item-section>
+          </q-item>
+        </template>
       </q-list>
 
       <div class="bg-white absolute-bottom">
@@ -489,6 +444,31 @@
         </q-card-section>
       </q-card>
     </q-dialog>
+
+    <q-dialog v-model="usersList">
+      <q-card style="width: 350px; max-width: 80vw">
+        <q-card-actions align="right" class="q-mb-none">
+          <q-btn dense flat icon="close" v-close-popup>
+            <q-tooltip>Close</q-tooltip>
+          </q-btn>
+        </q-card-actions>
+
+        <q-card-section align="center">
+          <div class="text-h5 text-weight-bold">Members</div>
+        </q-card-section>
+
+        <q-separator inset />
+
+        <template v-for="(user, index) in users" :key="index">
+          <q-item v-ripple>
+            <q-item-section avatar>
+              <q-avatar rounded color="primary" text-color="white">{{user.name[0]}}</q-avatar>
+            </q-item-section>
+            <q-item-section>{{user.name}}</q-item-section>
+          </q-item>
+        </template>
+      </q-card>
+    </q-dialog>
   </q-layout>
 </template>
 
@@ -502,6 +482,7 @@ export default defineComponent({
     return {
       message: '',
       loading: false,
+      usersList: false,
       leftDrawerOpen: false,
       rightDrawerOpen: false,
       statePick: 'online',
@@ -515,7 +496,8 @@ export default defineComponent({
   computed: {
     ...mapGetters('channels', {
       channels: 'joinedChannels',
-      lastMessageOf: 'lastMessageOf'
+      lastMessageOf: 'lastMessageOf',
+      users: 'currentUsers'
     }),
     activeChannel () {
       return this.$store.state.channels.active
@@ -527,6 +509,12 @@ export default defineComponent({
     },
     toggleRightDrawer () {
       this.rightDrawerOpen = !this.rightDrawerOpen
+      if (this.rightDrawerOpen) {
+        this.serveCommand({
+          channel: this.activeChannel,
+          message: '/list'
+        })
+      }
     },
 
     async send () {
@@ -534,10 +522,12 @@ export default defineComponent({
         this.loading = true
 
         if (this.message.startsWith('/')) {
+          if (this.message === '/list') { this.usersList = true }
           await this.serveCommand({
             channel: this.activeChannel,
             message: this.message
           })
+          console.log(this.users)
         } else {
           await this.addMessage({
             channel: this.activeChannel,

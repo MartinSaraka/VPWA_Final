@@ -3,6 +3,7 @@ import type { MessageRepositoryContract } from '@ioc:Repositories/MessageReposit
 import { inject } from '@adonisjs/core/build/standalone'
 import User from 'App/Models/User'
 import Channel from 'App/Models/Channel'
+import Database from '@ioc:Adonis/Lucid/Database'
 
 // inject repository from container to controller constructor
 // we do so because we can extract database specific storage to another class
@@ -30,14 +31,15 @@ export default class MessageController {
     return message
   }
 
-  public async serveCommand({ params, socket, auth }: WsContextContract, command: string) {
-    console.log(command)
-    if (command == "/list"){
-      // to do...
+  public async serveCommand({ params, socket, auth }: WsContextContract, channel:string, command: string) {
+    let result;
+    if (command === "/list"){
+      const channel_db = await Channel.findByOrFail("name", channel)
+      result = await User.query().whereHas('channels', (query) => {query.where('channels.id', channel_db.id)})
     }
 
     // TO DO all commands ...
 
-    return null
+    return result
   }
 }

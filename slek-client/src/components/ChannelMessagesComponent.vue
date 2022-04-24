@@ -9,7 +9,7 @@
           <div><strong>@Jakub</strong> tagnuta sprava je červená</div>
         </q-chat-message>
 
-    <!-- TO DO         :avatar="avatar" -->
+    <!-- TO DO         avatar zmenit podla mena -->
       <q-chat-message v-for="message in messages"
         class="q-mt-md"
         text-color="black"
