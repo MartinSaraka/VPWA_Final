@@ -24,14 +24,11 @@ export default class RegisterUserValidator {
    *    ```
    */
   public schema = schema.create({
-    email: schema.string({}, [
-      rules.email(),
-      rules.unique({ table: 'users', column: 'email' })
-    ]),
-    password: schema.string({}, [
-      rules.minLength(8),
-      rules.confirmed('passwordConfirmation')
-    ])
+    nick_name: schema.string({}, [rules.minLength(1)]),
+    name: schema.string({}, [rules.minLength(1)]),
+    surname: schema.string({}, [rules.minLength(1)]),
+    email: schema.string({}, [rules.email(), rules.unique({ table: 'users', column: 'email' })]),
+    password: schema.string({}, [rules.minLength(8), rules.confirmed('passwordConfirmation')]),
   })
 
   /**
