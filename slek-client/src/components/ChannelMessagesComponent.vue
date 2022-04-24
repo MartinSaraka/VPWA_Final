@@ -12,13 +12,14 @@
     <!-- TO DO         avatar zmenit podla mena -->
       <q-chat-message v-for="message in messages"
         class="q-mt-md"
-        text-color="black"
+        :text-color = "[taggedMessage(message.content) ? red() : black()]"
         :key="message.id"
         :avatar="getAvatar(message.author.email)"
         :name="message.author.email"
         :text="[message.content]"
         :stamp="message.createdAt"
         :sent="isMine(message)"
+        :log ="log()"
       />
 
         <q-chat-message
@@ -38,7 +39,6 @@
 import { QScrollArea } from 'quasar'
 import { SerializedMessage } from 'src/contracts'
 import { defineComponent, PropType } from 'vue'
-
 export default defineComponent({
   name: 'ChannelMessagesComponent',
   props: {
@@ -56,11 +56,34 @@ export default defineComponent({
     }
   },
   computed: {
+
     currentUser () {
       return this.$store.state.auth.user?.id
     }
   },
   methods: {
+    taggedMessage (message: any) {
+      console.log(message)
+      const taggedUser = this.$store.state.auth.user?.nickName
+      if (message.includes(taggedUser)) { return true } else { return false }
+    },
+    black () {
+      console.log('pici')
+      return 'black'
+    },
+    red () {
+      console.log('kokot')
+      return 'red'
+    },
+    log () {
+      console.log(this.$store.state.auth.user)
+      console.log(this.$store.state.auth.user)
+      console.log(this.$store.state.auth.user)
+      console.log(this.$store.state.auth.user?.nickName)
+      console.log(this.$store.state.auth.user?.nickName)
+      console.log(this.$store.state.auth.user?.nickName)
+      console.log(this.$store.state.auth.user?.nickName)
+    },
     scrollMessages () {
       const area = this.$refs.area as QScrollArea
       area && area.setScrollPercentage('vertical', 1.1)

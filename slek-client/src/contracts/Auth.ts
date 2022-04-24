@@ -6,6 +6,9 @@ export interface ApiToken {
 }
 
 export interface RegisterData {
+  nickName:string
+  name:string
+  surname:string
   email: string
   password: string
   passwordConfirmation: string
@@ -18,6 +21,9 @@ export interface LoginCredentials {
 }
 
 export interface User {
+  nickName:string
+  name:string
+  surname:string
   id: number
   email: string
   createdAt: string,
