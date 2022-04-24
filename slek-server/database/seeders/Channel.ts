@@ -11,6 +11,10 @@ export default class ChannelSeeder extends BaseSeeder {
         name: 'general',
         type: ChannelType.PUBLIC
       },
+      {
+        name: 'test',
+        type: ChannelType.PUBLIC
+      },
     ])
   }
 }

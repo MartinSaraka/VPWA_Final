@@ -1,7 +1,7 @@
 import { ActionTree } from 'vuex'
 import { StateInterface } from '../index'
 import { AuthStateInterface } from './state'
-import { authService, authManager } from 'src/services'
+import { authService, authManager, channelService } from 'src/services'
 import { LoginCredentials, RegisterData } from 'src/contracts'
 
 const actions: ActionTree<AuthStateInterface, StateInterface> = {
@@ -9,9 +9,14 @@ const actions: ActionTree<AuthStateInterface, StateInterface> = {
     try {
       commit('AUTH_START')
       const user = await authService.me()
-      // join user to general channel - hardcoded for now
+
+      // join user to his channels
       if (user?.id !== state.user?.id) {
-        await dispatch('channels/join', 'general', { root: true })
+        const channels = await channelService.getAll(user!.id)
+
+        for (let i = 0; i < channels.length; i++) {
+          dispatch('channels/join', channels[i].name, { root: true })
+        }
       }
       commit('AUTH_SUCCESS', user)
       return user !== null

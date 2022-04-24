@@ -11,6 +11,7 @@ import {
 } from '@ioc:Adonis/Lucid/Orm'
 import Channel from 'App/Models/Channel'
 import Message from 'App/Models/Message'
+import Notification from 'App/Models/Notification'
 
 export default class User extends BaseModel {
   @column({ isPrimary: true })
@@ -44,6 +45,11 @@ export default class User extends BaseModel {
     foreignKey: 'createdBy',
   })
   public sentMessages: HasMany<typeof Message>
+
+  @hasMany(() => Notification, {
+    foreignKey: 'userId',
+  })
+  public notifications: HasMany<typeof Notification>
 
   @manyToMany(() => Channel, {
     pivotTable: 'channel_users',
