@@ -1,68 +1,57 @@
 <template>
-<q-page class="row items-center justify-evenly">
-  <q-card square style="width: 400px; padding:50px">
-    <q-card-section>
-      <div class="text-h6">
-        Register
+  <img src="~assets/wave.png" class="wave" alt="register-wave" />
+    <div class="row" style="height: 90vh">
+      <div class="col-0 col-md-6 flex justify-center content-center">
+        <img src="~assets/Chat_SVG.svg" class="responsive" alt="register-image" />
       </div>
-    </q-card-section>
+      <div v-bind:class="{
+        'justify-center': $q.screen.md || $q.screen.sm || $q.screen.xs,
+      }" class="col-12 col-md-6 flex content-center">
 
-    <q-form ref="form" class="q-gutter-md">
-      <q-card-section>
-        <q-input
-          name="email"
-          id="email"
-          v-model.trim="form.email"
-          type="email"
-          label="Email"
-          autofocus
-        />
-        <q-input
-          id="password"
-          name="password"
-          v-model="form.password"
-          label="Password"
-          :type="showPassword ? 'text' : 'password'"
-          bottom-slots
-        >
-          <template v-slot:append>
-            <q-icon
-              :name="showPassword ? 'visibility' : 'visibility_off'"
-              class="cursor-pointer"
-              @click="showPassword = !showPassword"
-            />
-          </template>
-        </q-input>
-        <q-input
-          id="password_confirmation"
-          name="password_confirmation"
-          v-model="form.passwordConfirmation"
-          label="Confirm Password"
-          :type="showPassword ? 'text' : 'password'"
-          bottom-slots
-        >
-          <template v-slot:append>
-            <q-icon
-              :name="showPassword ? 'visibility' : 'visibility_off'"
-              class="cursor-pointer"
-              @click="showPassword = !showPassword"
-            />
-          </template>
-        </q-input>
-      </q-card-section>
-
-      <q-card-actions align="between">
-        <q-btn label="Login" size="sm" flat :to="{ name: 'login' }"></q-btn>
+<q-card
+        v-bind:style="$q.screen.lt.sm ? { width: '80%' } : { width: '50%' }"
+      >
+        <q-form ref="form" class="q-gutter-md">
+          <q-card-section>
+            <q-input name="nick_name" label="Nickname" id="nick_name" type="name" v-model.trim="form.nick_name"
+              autofocus>
+            </q-input>
+            <q-input name="name" label="Username" id="name" type="name" v-model.trim="form.name">
+            </q-input>
+            <q-input name="surname" label="Surname" id="surname" type="name" v-model.trim="form.surname">
+            </q-input>
+            <q-input name="email" id="email" v-model.trim="form.email" type="email" label="Email" />
+            <q-input id="password" name="password" v-model="form.password" label="Password"
+              :type="showPassword ? 'text' : 'password'" bottom-slots>
+              <template v-slot:append>
+                <q-icon :name="showPassword ? 'visibility' : 'visibility_off'" class="cursor-pointer"
+                  @click="showPassword = !showPassword" />
+              </template>
+            </q-input>
+            <q-input id="password_confirmation" name="password_confirmation" v-model="form.passwordConfirmation"
+              label="Confirm Password" :type="showPassword ? 'text' : 'password'" bottom-slots>
+              <template v-slot:append>
+                <q-icon :name="showPassword ? 'visibility' : 'visibility_off'" class="cursor-pointer"
+                  @click="showPassword = !showPassword" />
+              </template>
+            </q-input>
+          </q-card-section>
+          <q-card-actions >
+        <q-btn label="" size="sm" flat :to="{ name: 'login' }"></q-btn>
         <q-btn
+          class="full-width"
           label="Register"
           color="primary"
+          rounded
           :loading="loading"
           @click="onSubmit"
         />
-      </q-card-actions>
-    </q-form>
-  </q-card>
-</q-page>
+<q-btn label="Login" size="sm" flat :to="{ name: 'login' }"></q-btn>
+</q-card-actions>
+        </q-form>
+        </q-card>
+      </div>
+    </div>
 </template>
 
 <script lang="ts">
@@ -73,7 +62,7 @@ export default defineComponent({
   name: 'RegisterPage',
   data () {
     return {
-      form: { email: '', password: '', passwordConfirmation: '' },
+      form: { nick_name: '', name: '', surname: '', email: '', password: '', passwordConfirmation: '' },
       showPassword: false
     }
   },
@@ -92,3 +81,13 @@ export default defineComponent({
   }
 })
 </script>
+
+<style scoped>
+.wave {
+  position: fixed;
+  height: 100%;
+  left: 0;
+  bottom: 0;
+  z-index: -1;
+}
+</style>
