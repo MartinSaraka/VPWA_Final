@@ -120,7 +120,7 @@
               @click="invitedDialog = true"
             >
               <q-item-section avatar>
-                <q-icon :name="channel.type" />
+                <q-icon :name="getChannelTypeIcon(channel.type)" />
               </q-item-section>
 
               <q-item-section>
@@ -140,7 +140,7 @@
               @click="setActiveChannel(channel.name)"
             >
               <q-item-section avatar>
-                 <q-icon :name="channel.type" />
+                <q-icon :name="getChannelTypeIcon(channel.type)" />
               </q-item-section>
               <q-item-section>
                 {{ channel.name }}
@@ -523,6 +523,9 @@ export default defineComponent({
     },
     getAvatar (nickName: string) {
       return 'https://ui-avatars.com/api//?background=0D8ABC&color=fff&name=' + nickName + '&length=1'
+    },
+    getChannelTypeIcon (channelType : string) {
+      if (channelType === 'public') { return channelType } else if (channelType === 'private') { return 'lock' }
     },
 
     async send () {
