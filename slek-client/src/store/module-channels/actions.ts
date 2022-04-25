@@ -32,6 +32,7 @@ const actions: ActionTree<ChannelsStateInterface, StateInterface> = {
 
     if (message === '/list') {
       commit('SET_USERS', result)
+      console.log(result)
     } else if (message === '/cancel') {
       channelService.leave(channel)
     }

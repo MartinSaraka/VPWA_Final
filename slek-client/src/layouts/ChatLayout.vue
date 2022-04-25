@@ -179,11 +179,11 @@
           <q-item clickable v-ripple class="q-mt-sm q-pl-lg text-center">
             <q-item-section avatar>
               <q-avatar rounded color="primary" text-color="white">
-                {{user.name[0]}}
+                {{user.nickName[0]}}
                 <q-badge floating rounded color="green" />
               </q-avatar>
             </q-item-section>
-            <q-item-section class="text-center text-subtitle1">{{user.name}}</q-item-section>
+            <q-item-section class="text-center text-subtitle1">{{user.nickName}}</q-item-section>
             <q-item-section avatar>
               <q-icon
                 name="admin_panel_settings"
@@ -462,9 +462,9 @@
         <template v-for="(user, index) in users" :key="index">
           <q-item v-ripple>
             <q-item-section avatar>
-              <q-avatar rounded color="primary" text-color="white">{{user.name[0]}}</q-avatar>
+              <q-avatar rounded color="primary" text-color="white">{{user.nickName[0]}}</q-avatar>
             </q-item-section>
-            <q-item-section>{{user.name}}</q-item-section>
+            <q-item-section>{{user.nickName}}</q-item-section>
           </q-item>
         </template>
       </q-card>

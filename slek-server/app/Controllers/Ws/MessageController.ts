@@ -36,6 +36,7 @@ export default class MessageController {
     if (command === "/list"){
       const channel_db = await Channel.findByOrFail("name", channel)
       result = await User.query().whereHas('channels', (query) => {query.where('channels.id', channel_db.id)})
+      return result;
     }
     else if (command === "/cancel"){
       const channel_db = await Channel.findByOrFail("name", channel)
