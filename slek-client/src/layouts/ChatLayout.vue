@@ -31,9 +31,8 @@
       >
         <div class="absolute-top bg-transparent column items-center">
           <div class="column items-center">
-            <q-avatar rounded size="48px">
-              <!-- AKTUALNY USER JEHO AVATAR  getAvatar(currentUser.nickName) -->
-              <img src="https://cdn.quasar.dev/img/avatar1.jpg" />
+            <q-avatar rounded color="primary" size="48px">
+              {{this.$store.state.auth.user?.nickName[0]}}
               <q-badge
                 v-if="statePick === 'online'"
                 floating
@@ -154,18 +153,13 @@
     <q-drawer width="250" v-model="rightDrawerOpen" side="right" bordered>
       <div class="column items-center">
         <q-btn
-          class="q-mt-md"
-          style="width: 80%"
-          color="primary"
-          icon="exit_to_app"
-          label="Leave channel"
-        />
-        <q-btn
           class="q-my-md"
           style="width: 80%"
           color="primary"
-          icon="delete_forever"
-          label="Delete channel"
+          size="sm"
+          icon="exit_to_app"
+          label="Leave / Delete channel"
+          @click="leaveChannel"
         />
       </div>
 
@@ -187,7 +181,7 @@
             <q-item-section class="text-center text-subtitle1">{{user.nickName}}</q-item-section>
             <q-item-section avatar>
               <q-icon
-                name="admin_panel_settings"
+                :name="getPanelIcon(user.role)"
                 class="text-primary vertical-middle text-center"
                 size="md"
               />
@@ -466,6 +460,13 @@
               <q-avatar rounded color="primary" text-color="white">{{user.nickName[0]}}</q-avatar>
             </q-item-section>
             <q-item-section>{{user.nickName}}</q-item-section>
+                        <q-item-section avatar>
+              <q-icon
+                :name="getPanelIcon(user.role)"
+                class="text-primary vertical-middle text-center"
+                size="md"
+              />
+            </q-item-section>
           </q-item>
         </template>
       </q-card>
@@ -518,6 +519,20 @@ export default defineComponent({
         })
       }
     },
+    async leaveChannel () {
+      await this.serveCommand({
+        channel: this.activeChannel,
+        message: '/cancel',
+        userId: this.$store.state.auth.user?.id
+      })
+    },
+    getPanelIcon (role: string) {
+      if (role === 'admin') {
+        return 'admin_panel_settings'
+      } else {
+        return 'account_circle'
+      }
+    },
     getAvatar (nickName: string) {
       return 'https://ui-avatars.com/api//?background=0D8ABC&color=fff&name=' + nickName + '&length=1'
     },
@@ -536,7 +551,6 @@ export default defineComponent({
             message: this.message,
             userId: this.$store.state.auth.user?.id
           })
-          console.log(this.users)
         } else {
           await this.addMessage({
             channel: this.activeChannel,

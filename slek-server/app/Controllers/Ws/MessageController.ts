@@ -32,11 +32,20 @@ export default class MessageController {
   }
 
   public async serveCommand({ params, socket, auth }: WsContextContract, channel:string, command: string, userId: number) {
-    let result;
     if (command === "/list"){
+      console.log("LIST")
       const channel_db = await Channel.findByOrFail("name", channel)
-      result = await User.query().whereHas('channels', (query) => {query.where('channels.id', channel_db.id)})
-      return result;
+     // const users = await User.query().whereHas('channels', (query) => {query.where('channels.id', channel_db.id)})
+
+      const users2 = await Database
+      .from('users')
+      .select('users.id', 'users.nick_name as nickName', 'users.name',
+              'users.surname', 'users.email', 'channel_users.role',
+              'channel_users.created_at as createdAt', 'channel_users.updated_at as updatedAt')
+      .join("channel_users", "users.id", "channel_users.user_id")
+      .where("channel_users.channel_id", channel_db.id)
+
+      return users2;
     }
     else if (command === "/cancel"){
       const channel_db = await Channel.findByOrFail("name", channel)

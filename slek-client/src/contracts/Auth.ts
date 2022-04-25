@@ -26,6 +26,7 @@ export interface User {
   name:string
   surname:string
   email: string
-  createdAt: string,
+  role: string
+  createdAt: string
   updatedAt: string
 }
