@@ -32,6 +32,7 @@
         <div class="absolute-top bg-transparent column items-center">
           <div class="column items-center">
             <q-avatar rounded size="48px">
+              <!-- AKTUALNY USER JEHO AVATAR  getAvatar(currentUser.nickName) -->
               <img src="https://cdn.quasar.dev/img/avatar1.jpg" />
               <q-badge
                 v-if="statePick === 'online'"
@@ -501,6 +502,9 @@ export default defineComponent({
     }),
     activeChannel () {
       return this.$store.state.channels.active
+    },
+    currentUser () {
+      return this.$store.state.auth.user
     }
   },
   methods: {
@@ -516,6 +520,9 @@ export default defineComponent({
           userId: this.$store.state.auth.user?.id
         })
       }
+    },
+    getAvatar (nickName: string) {
+      return 'https://ui-avatars.com/api//?background=0D8ABC&color=fff&name=' + nickName + '&length=1'
     },
 
     async send () {

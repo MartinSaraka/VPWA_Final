@@ -56,7 +56,6 @@ export default defineComponent({
     }
   },
   computed: {
-
     currentUser () {
       return this.$store.state.auth.user?.id
     }
@@ -91,8 +90,8 @@ export default defineComponent({
     isMine (message: SerializedMessage): boolean {
       return message.author.id === this.currentUser
     },
-    getAvatar (email: string) {
-      return 'https://ui-avatars.com/api//?background=0D8ABC&color=fff&name=' + email + '&length=1'
+    getAvatar (nickName: string) {
+      return 'https://ui-avatars.com/api//?background=0D8ABC&color=fff&name=' + nickName + '&length=1'
     }
   }
 })
