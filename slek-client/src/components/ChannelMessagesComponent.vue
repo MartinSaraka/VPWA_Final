@@ -19,7 +19,6 @@
         :text="[message.content]"
         :stamp="message.createdAt"
         :sent="isMine(message)"
-        :log ="log()"
       />
 
         <q-chat-message
@@ -62,26 +61,14 @@ export default defineComponent({
   },
   methods: {
     taggedMessage (message: any) {
-      console.log(message)
       const taggedUser = this.$store.state.auth.user?.nickName
       if (message.includes(taggedUser)) { return true } else { return false }
     },
     black () {
-      console.log('pici')
       return 'black'
     },
     red () {
-      console.log('kokot')
       return 'red'
-    },
-    log () {
-      console.log(this.$store.state.auth.user)
-      console.log(this.$store.state.auth.user)
-      console.log(this.$store.state.auth.user)
-      console.log(this.$store.state.auth.user?.nickName)
-      console.log(this.$store.state.auth.user?.nickName)
-      console.log(this.$store.state.auth.user?.nickName)
-      console.log(this.$store.state.auth.user?.nickName)
     },
     scrollMessages () {
       const area = this.$refs.area as QScrollArea
