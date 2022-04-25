@@ -15,7 +15,7 @@ const actions: ActionTree<AuthStateInterface, StateInterface> = {
         const channels = await channelService.getAll(user!.id)
 
         for (let i = 0; i < channels.length; i++) {
-          dispatch('channels/join', channels[i].name, { root: true })
+          dispatch('channels/join', channels[i], { root: true })
         }
       }
       commit('AUTH_SUCCESS', user)

@@ -21,10 +21,10 @@ export interface LoginCredentials {
 }
 
 export interface User {
+  id: number
   nickName:string
   name:string
   surname:string
-  id: number
   email: string
   createdAt: string,
   updatedAt: string

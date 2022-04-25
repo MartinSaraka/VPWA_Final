@@ -119,7 +119,7 @@
               @click="invitedDialog = true"
             >
               <q-item-section avatar>
-                <q-icon name=channel.type />
+                <q-icon :name="channel.type" />
               </q-item-section>
 
               <q-item-section>
@@ -135,14 +135,14 @@
               clickable
               v-ripple
               :to="{ name: 'Channel', params: { id: index } }"
-              :active="channel === activeChannel"
-              @click="setActiveChannel(channel)"
+              :active="channel.name === activeChannel"
+              @click="setActiveChannel(channel.name)"
             >
               <q-item-section avatar>
-                <q-icon :name="channel.type" />
+                 <q-icon :name="channel.type" />
               </q-item-section>
               <q-item-section>
-                {{ channel }}
+                {{ channel.name }}
               </q-item-section>
             </q-item>
           </template>

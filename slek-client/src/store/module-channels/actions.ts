@@ -2,14 +2,18 @@ import { ActionTree } from 'vuex'
 import { StateInterface } from '../index'
 import { ChannelsStateInterface } from './state'
 import { channelService } from 'src/services'
-import { RawMessage } from 'src/contracts'
+import { RawMessage, SerializedChannel } from 'src/contracts'
 
 const actions: ActionTree<ChannelsStateInterface, StateInterface> = {
-  async join ({ commit }, channel: string) {
+  async join ({ commit }, channel: SerializedChannel) {
     try {
       commit('LOADING_START')
-      const messages = await channelService.join(channel).loadMessages()
-      commit('LOADING_SUCCESS', { channel, messages })
+
+      const channelName = channel.name
+      const messages = await channelService.join(channel.name).loadMessages()
+
+      commit('ADD_CHANNEL', channel)
+      commit('LOADING_SUCCESS', { channel: channelName, messages })
     } catch (err) {
       commit('LOADING_ERROR', err)
       throw err
