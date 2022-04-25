@@ -18,6 +18,10 @@ const mutation: MutationTree<ChannelsStateInterface> = {
   CLEAR_CHANNEL (state, channel) {
     state.active = null
     delete state.messages[channel]
+    const index = state.channels.findIndex(item => item.name === channel)
+    if (index > -1) {
+      state.channels.splice(index, 1)
+    }
   },
   SET_ACTIVE (state, channel: string) {
     state.active = channel
