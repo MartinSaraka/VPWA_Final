@@ -1,13 +1,5 @@
 <template>
   <q-scroll-area ref="area" style="width: 100%; height: calc(100vh - 150px)">
-        <q-chat-message
-          name="Martin"
-          :avatar="getAvatar('Martin')"
-          bg-color="red"
-          stamp="18.3.2022 at 12:00"
-        >
-          <div><strong>@Jakub</strong> tagnuta sprava je červená</div>
-        </q-chat-message>
 
     <!-- TO DO         avatar zmenit podla mena -->
       <q-chat-message v-for="message in messages"
@@ -21,16 +13,6 @@
         :sent="isMine(message)"
       />
 
-        <q-chat-message
-          name="Martin"
-          :avatar="getAvatar('Martin')"
-          bg-color="amber"
-        >
-          <div>
-            Martin is typing
-            <q-spinner-dots class="q-ml-sm" size="2rem" />
-          </div>
-        </q-chat-message>
       </q-scroll-area>
 </template>
 
