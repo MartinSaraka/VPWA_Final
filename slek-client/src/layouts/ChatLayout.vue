@@ -53,7 +53,7 @@
                 color="grey-6"
               />
             </q-avatar>
-            <div class="text-h6 ellipsis">Jakub</div>
+            <div class="text-h6 ellipsis">{{this.$store.state.auth.user?.nickName}}</div>
           </div>
 
           <q-list class="column items-center">
@@ -502,9 +502,6 @@ export default defineComponent({
     }),
     activeChannel () {
       return this.$store.state.channels.active
-    },
-    currentUser () {
-      return this.$store.state.auth.user
     }
   },
   methods: {
