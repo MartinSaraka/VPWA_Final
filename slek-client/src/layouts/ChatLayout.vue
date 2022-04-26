@@ -263,68 +263,6 @@
           <div class="text-h5 ellipsis">Notifications</div>
         </q-card-section>
 
-        <q-separator class="q-mb-sm" />
-
-        <q-scroll-area style="height: 250px; border-right: 1px solid #ddd">
-          <q-list>
-            <q-item clickable>
-              <q-item-section>
-                <q-item-label
-                  >Majka sent u message (aaaa....) 3 mins ago</q-item-label
-                >
-              </q-item-section>
-            </q-item>
-
-            <q-item clickable>
-              <q-item-section>
-                <q-item-label
-                  >Majka sent u message (yyyyyy....) 2 mins ago</q-item-label
-                >
-              </q-item-section>
-            </q-item>
-
-            <q-item clickable>
-              <q-item-section>
-                <q-item-label
-                  >Majka sent u message (xxxxx....) 1 mins ago</q-item-label
-                >
-              </q-item-section>
-            </q-item>
-
-            <q-item clickable>
-              <q-item-section>
-                <q-item-label
-                  >Majka sent u message (xxxxx....) 1 mins ago</q-item-label
-                >
-              </q-item-section>
-            </q-item>
-
-            <q-item clickable>
-              <q-item-section>
-                <q-item-label
-                  >Majka sent u message (xxxxx....) 1 mins ago</q-item-label
-                >
-              </q-item-section>
-            </q-item>
-
-            <q-item clickable>
-              <q-item-section>
-                <q-item-label
-                  >Majka sent u message (xxxxx....) 1 mins ago</q-item-label
-                >
-              </q-item-section>
-            </q-item>
-
-            <q-item clickable>
-              <q-item-section>
-                <q-item-label
-                  >Majka sent u message (xxxxx....) 1 mins ago</q-item-label
-                >
-              </q-item-section>
-            </q-item>
-          </q-list>
-        </q-scroll-area>
-
         <q-separator />
         <q-card-section align="center">
           <q-btn-toggle
@@ -332,8 +270,8 @@
             push
             toggle-color="primary"
             :options="[
-              { value: 'one', slot: 'one' },
-              { value: 'two', slot: 'two' },
+              { value: true, slot: 'one' },
+              { value: false, slot: 'two' },
             ]"
           >
             <template v-slot:one>
@@ -484,12 +422,13 @@ export default defineComponent({
     return {
       message: '',
       loading: false,
+      isReceivingNotification: true,
       usersList: false,
       leftDrawerOpen: false,
       rightDrawerOpen: false,
       statePick: 'online',
       notificationsDialog: false,
-      notificationOptions: 'one',
+      notificationOptions: true,
       notificationsDialog1: false,
       notificationOptions1: 'one',
       invitedDialog: false
@@ -503,6 +442,15 @@ export default defineComponent({
     }),
     activeChannel () {
       return this.$store.state.channels.active
+    }
+  },
+  watch: {
+    notificationOptions: {
+      handler () {
+        this.setReceiveNotifications(this.notificationOptions)
+        console.log(this.$store.state.channels.isReceivingNotifications)
+        this.showNotification()
+      }
     }
   },
   methods: {
@@ -519,13 +467,15 @@ export default defineComponent({
         })
       }
     },
-    async leaveChannel () {
-      await this.serveCommand({
-        channel: this.activeChannel,
-        message: '/cancel',
-        userId: this.$store.state.auth.user?.id
+
+    showNotification () {
+      this.$q.notify({
+        message: 'Jim pinged you.',
+        position: 'top',
+        color: 'purple'
       })
     },
+
     getPanelIcon (role: string) {
       if (role === 'admin') {
         return 'admin_panel_settings'
@@ -562,8 +512,17 @@ export default defineComponent({
         this.loading = false
       }
     },
+    async leaveChannel () {
+      await this.serveCommand({
+        channel: this.activeChannel,
+        message: '/cancel',
+        userId: this.$store.state.auth.user?.id
+      })
+    },
+
     ...mapMutations('channels', {
-      setActiveChannel: 'SET_ACTIVE'
+      setActiveChannel: 'SET_ACTIVE',
+      setReceiveNotifications: 'SET_RECEIVE_NOTIFICATIONS'
     }),
     ...mapActions('auth', ['logout']),
     ...mapActions('channels', ['addMessage']),
