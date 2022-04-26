@@ -12,6 +12,9 @@ const getters: GetterTree<ChannelsStateInterface, StateInterface> = {
   currentUsers (context) {
     return context.users
   },
+  currentNotification (context) {
+    return context.currentNotification
+  },
   lastMessageOf (context) {
     return (channel: string) => {
       const messages = context.messages[channel]

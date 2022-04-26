@@ -1,5 +1,5 @@
 <template>
-  <q-infinite-scroll style="width: 100%; height: calc(100vh - 150px)"
+  <q-infinite-scroll ref="area" style="width: 100%; height: calc(100vh - 150px)"
   @load="onLoad" reverse>
 
  <template v-slot:loading>
@@ -23,13 +23,15 @@
 </template>
 
 <script lang="ts">
+import { QScrollArea } from 'quasar'
 import { SerializedMessage } from 'src/contracts'
 import { defineComponent, PropType } from 'vue'
 export default defineComponent({
   data () {
     return {
       temporaryMessages: this.messages.slice(-5),
-      messageGeneratedNumber: 5
+      messageGeneratedNumber: 5,
+      messagesLenght: this.messages.length
     }
   },
   name: 'ChannelMessagesComponent',
@@ -40,6 +42,14 @@ export default defineComponent({
     }
   },
   watch: {
+    messages: {
+
+      handler () {
+        this.$nextTick(() => this.scrollMessages())
+        this.fixArrays()
+      },
+      deep: true
+    }
   },
   computed: {
     currentUser () {
@@ -47,8 +57,11 @@ export default defineComponent({
     }
   },
   methods: {
+    fixArrays () {
+      this.temporaryMessages = this.messages.slice(-this.temporaryMessages)
+    },
     taggedMessage (message: any) {
-      const taggedUser = this.$store.state.auth.user?.nickName
+      const taggedUser = '@' + this.$store.state.auth.user?.nickName
       if (message.includes(taggedUser)) { return true } else { return false }
     },
     black () {
@@ -56,6 +69,10 @@ export default defineComponent({
     },
     red () {
       return 'red'
+    },
+    scrollMessages () {
+      const area = this.$refs.area as QScrollArea
+      area && area.setScrollPercentage('vertical', 1.1)
     },
     isMine (message: SerializedMessage): boolean {
       return message.author.id === this.currentUser
@@ -73,7 +90,7 @@ export default defineComponent({
         if (this.messages.length === this.temporaryMessages.length) { isDone = true }
 
         done(isDone)
-      }, 1500)
+      }, 2000)
     }
   }
 })
