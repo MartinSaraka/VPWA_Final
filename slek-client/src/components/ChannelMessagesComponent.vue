@@ -18,6 +18,16 @@
         :stamp="message.createdAt"
         :sent="isMine(message)"
       />
+      <q-chat-message
+          name="Martin"
+          :avatar="getAvatar('Martin')"
+          bg-color="amber"
+        >
+          <div>
+            Martin is typing
+            <q-spinner-dots class="q-ml-sm" size="2rem" />
+          </div>
+        </q-chat-message>
 
       </q-infinite-scroll>
 </template>
