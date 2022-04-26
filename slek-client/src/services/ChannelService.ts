@@ -13,6 +13,10 @@ class ChannelSocketManager extends SocketManager {
       store.commit('channels/NEW_MESSAGE', { channel, message })
     })
 
+    this.socket.on('notification', (message: SerializedMessage) => {
+      store.commit('channels/NEW_NOTIFICATION', message)
+    })
+
     this.socket.on('leaveChannel', (channel: string) => {
       store.commit('channels/CLEAR_CHANNEL', channel)
     })

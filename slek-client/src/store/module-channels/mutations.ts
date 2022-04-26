@@ -32,7 +32,10 @@ const mutation: MutationTree<ChannelsStateInterface> = {
   NEW_MESSAGE (state, { channel, message }: { channel: string, message: SerializedMessage }) {
     state.messages[channel].push(message)
   },
-  SET_RECEIVE_NOTIFICATIONS (state, value) {
+  NEW_NOTIFICATION (state, message : SerializedMessage) {
+    state.currentNotification = message
+  },
+  SET_RECEIVE_ALL_NOTIFICATIONS (state, value) {
     state.isReceivingNotifications = value
   },
   ADD_CHANNEL (state, channel) {

@@ -25,15 +25,19 @@ export default class MessageController {
 
   public async addMessage({ params, socket, auth }: WsContextContract, content: string) {
     const message = await this.messageRepository.create(params.name, auth.user!.id, content)
+
     // broadcast message to other users in channel
     socket.broadcast.emit('message', message)
+
+    // broadcast notification to other users
+    socket.broadcast.emit('notification', message)
+
     // return message to sender
     return message
   }
 
   public async serveCommand({ params, socket, auth }: WsContextContract, channel:string, command: string, userId: number) {
     if (command === "/list"){
-      console.log("LIST")
       const channel_db = await Channel.findByOrFail("name", channel)
      // const users = await User.query().whereHas('channels', (query) => {query.where('channels.id', channel_db.id)})
 

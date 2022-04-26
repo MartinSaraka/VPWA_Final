@@ -6,6 +6,7 @@ export interface ChannelsStateInterface {
   error: Error | null,
   users: User[]
   channels: SerializedChannel[]
+  currentNotification: SerializedMessage | null
   messages: { [channel: string]: SerializedMessage[] }
   active: string | null
 }
@@ -17,6 +18,7 @@ function state (): ChannelsStateInterface {
     error: null,
     users: [],
     channels: [],
+    currentNotification: null,
     messages: {},
     active: null
   }

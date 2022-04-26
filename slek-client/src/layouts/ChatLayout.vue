@@ -266,7 +266,7 @@
         <q-separator />
         <q-card-section align="center">
           <q-btn-toggle
-            v-model="notificationOptions"
+            v-model="isReceivingAllNotifications"
             push
             toggle-color="primary"
             :options="[
@@ -413,6 +413,7 @@
 </template>
 
 <script lang="ts">
+import { SerializedMessage } from 'src/contracts'
 import { defineComponent } from 'vue'
 import { mapActions, mapGetters, mapMutations } from 'vuex'
 
@@ -422,35 +423,53 @@ export default defineComponent({
     return {
       message: '',
       loading: false,
-      isReceivingNotification: true,
       usersList: false,
       leftDrawerOpen: false,
       rightDrawerOpen: false,
       statePick: 'online',
       notificationsDialog: false,
-      notificationOptions: true,
+      isReceivingAllNotifications: true,
       notificationsDialog1: false,
       notificationOptions1: 'one',
-      invitedDialog: false
+      invitedDialog: false,
+      notificationsQue: [] as SerializedMessage[]
     }
   },
   computed: {
     ...mapGetters('channels', {
       channels: 'joinedChannels',
-      lastMessageOf: 'lastMessageOf',
-      users: 'currentUsers'
+      users: 'currentUsers',
+      currentNotification: 'currentNotification'
     }),
     activeChannel () {
       return this.$store.state.channels.active
+    },
+    appVisible () {
+      return this.$q.appVisible
     }
   },
   watch: {
-    notificationOptions: {
+    isReceivingAllNotifications: {
       handler () {
-        this.setReceiveNotifications(this.notificationOptions)
-        console.log(this.$store.state.channels.isReceivingNotifications)
-        this.showNotification()
+        this.setReceiveNotifications(this.isReceivingAllNotifications)
       }
+    },
+    appVisible () {
+      if (this.appVisible) {
+        // print notifications from que
+        for (let i = 0; i < this.notificationsQue.length; i++) {
+          this.showNotification(this.notificationsQue[i])
+        }
+        this.notificationsQue = []
+      }
+    },
+    currentNotification: {
+      handler () {
+        if (!this.appVisible && (this.isReceivingAllNotifications || this.taggedMessage(this.currentNotification.content))) {
+          this.notificationsQue.push(this.currentNotification)
+        }
+      },
+      deep: true
     }
   },
   methods: {
@@ -468,12 +487,28 @@ export default defineComponent({
       }
     },
 
-    showNotification () {
+    showNotification (message: SerializedMessage) {
+      let formattedMessageContent = message.content.slice(0, 14)
+      if (message.content.length > 14) {
+        formattedMessageContent += '...'
+      }
+      const authorNickname = message.author.nickName
+      const notification = authorNickname + ' sent a message : ' + formattedMessageContent
+
       this.$q.notify({
-        message: 'Jim pinged you.',
+        message: notification,
         position: 'top',
-        color: 'purple'
+        color: 'red',
+        avatar: this.getAvatar(authorNickname)
       })
+    },
+
+    taggedMessage (message: string) {
+      const taggedUser = this.$store.state.auth.user?.nickName
+      if (typeof (taggedUser) === 'string' && message.includes(taggedUser)) {
+        return true
+      }
+      return false
     },
 
     getPanelIcon (role: string) {
@@ -522,7 +557,7 @@ export default defineComponent({
 
     ...mapMutations('channels', {
       setActiveChannel: 'SET_ACTIVE',
-      setReceiveNotifications: 'SET_RECEIVE_NOTIFICATIONS'
+      setReceiveNotifications: 'SET_RECEIVE_ALL_NOTIFICATIONS'
     }),
     ...mapActions('auth', ['logout']),
     ...mapActions('channels', ['addMessage']),
