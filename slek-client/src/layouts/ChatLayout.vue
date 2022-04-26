@@ -9,8 +9,7 @@
         </q-toolbar-title>
 
         <q-btn class="q-mr-xl" color="blue" @click="notificationsDialog = true">
-          Notifications
-          <q-badge class="q-ml-sm" color="red" right>7</q-badge>
+          Notifications options
         </q-btn>
         <q-btn
           class="q-mr-sm"
@@ -260,11 +259,11 @@
         </q-card-actions>
 
         <q-card-section align="center">
-          <div class="text-h5 ellipsis">Notifications</div>
+          <div class="text-h5 ellipsis">Notifications options</div>
         </q-card-section>
 
         <q-separator />
-        <q-card-section align="center">
+        <q-card-section align="center" class="q-my-md">
           <q-btn-toggle
             v-model="isReceivingAllNotifications"
             push
