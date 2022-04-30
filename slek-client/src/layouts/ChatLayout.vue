@@ -97,7 +97,7 @@
                 color="blue "
                 label="Create channel"
                 icon="create"
-                @click="notificationsDialog1 = true"
+                @click="createChannelDialog = true"
               />
             </q-item-section>
           </q-item>
@@ -295,7 +295,7 @@
       </q-card>
     </q-dialog>
 
-    <q-dialog v-model="notificationsDialog1">
+    <q-dialog v-model="createChannelDialog">
       <q-card style="width: 700px; max-width: 80vw">
         <q-card-actions align="right" class="q-mb-none">
           <q-btn dense flat icon="close" v-close-popup>
@@ -309,22 +309,22 @@
 
         <q-card-section align="center">
           <q-btn-toggle
-            v-model="notificationOptions1"
+            v-model="createChannelTypeOptions"
             push
             toggle-color="primary"
             :options="[
-              { value: 'one', slot: 'one' },
-              { value: 'two', slot: 'two' },
+              { value: 'public', slot: 'public' },
+              { value: 'private', slot: 'private' },
             ]"
           >
-            <template v-slot:one>
+            <template v-slot:public>
               <div class="row items-center no-wrap">
                 <q-icon left name="public" />
                 <div class="text-center">Public</div>
               </div>
             </template>
 
-            <template v-slot:two>
+            <template v-slot:private>
               <div class="row items-center no-wrap">
                 <q-icon left name="lock" />
                 <div class="text-center">Private</div>
@@ -333,7 +333,7 @@
           </q-btn-toggle>
         </q-card-section>
         <div class="q-pa-md flex justify-center">
-          <q-input rounded outlined v-model="text" label="Channel name" />
+          <q-input rounded outlined v-model="createChannelText" label="Channel name" />
         </div>
 
         <q-separator />
@@ -344,6 +344,7 @@
             label="Create channel"
             icon="create"
             rounded
+            @click="createChannel()"
           />
         </div>
       </q-card>
@@ -428,8 +429,9 @@ export default defineComponent({
       statePick: 'online',
       notificationsDialog: false,
       isReceivingAllNotifications: true,
-      notificationsDialog1: false,
-      notificationOptions1: 'one',
+      createChannelDialog: false,
+      createChannelTypeOptions: 'public',
+      createChannelText: '',
       invitedDialog: false,
       notificationsQue: [] as SerializedMessage[]
     }
@@ -545,6 +547,21 @@ export default defineComponent({
         this.message = ''
         this.loading = false
       }
+    },
+    async createChannel () {
+      let privateChannel = ''
+      if (this.createChannelTypeOptions === 'private') {
+        privateChannel = 'private'
+      }
+
+      await this.serveCommand({
+        channel: this.activeChannel,
+        message: '/join' + ' ' + this.createChannelText + ' ' + privateChannel,
+        userId: this.$store.state.auth.user?.id
+      })
+
+      this.createChannelText = ''
+      this.createChannelTypeOptions = 'public'
     },
     async leaveChannel () {
       await this.serveCommand({
