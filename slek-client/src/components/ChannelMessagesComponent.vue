@@ -1,5 +1,5 @@
 <template>
-  <q-infinite-scroll ref="area" style="width: 100%; height: calc(100vh - 150px)"
+  <q-infinite-scroll style="width: 100%; height: calc(100vh - 150px)"
   @load="onLoad" reverse>
 
  <template v-slot:loading>
@@ -7,10 +7,11 @@
           <q-spinner color="primary" name="dots" size="40px" />
         </div>
       </template>
-    <!-- TO DO         avatar zmenit podla mena -->
+
       <q-chat-message v-for="message in temporaryMessages"
         class="q-mt-md"
-        :text-color = "[taggedMessage(message.content) ? red() : black()]"
+        text-color="black"
+        :bg-color = "[taggedMessage(message.content) ? red() : null]"
         :key="message.id"
         :avatar="getAvatar(message.author.nickName)"
         :name="message.author.nickName"
@@ -72,9 +73,6 @@ export default defineComponent({
     taggedMessage (message: any) {
       const taggedUser = '@' + this.$store.state.auth.user?.nickName
       if (message.includes(taggedUser)) { return true } else { return false }
-    },
-    black () {
-      return 'black'
     },
     red () {
       return 'red'
