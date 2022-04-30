@@ -1,4 +1,4 @@
-import { RawMessage, SerializedMessage } from 'src/contracts'
+import { RawMessage, SerializedChannel, SerializedMessage } from 'src/contracts'
 import { BootParams, SocketManager } from './SocketManager'
 import { api } from 'src/boot/axios'
 
@@ -19,6 +19,11 @@ class ChannelSocketManager extends SocketManager {
 
     this.socket.on('leaveChannel', (channel: string) => {
       store.commit('channels/CLEAR_CHANNEL', channel)
+    })
+
+    this.socket.on('joinChannel', (channel: SerializedChannel) => {
+      console.log(channel)
+      store.dispatch('channels/join', channel)
     })
   }
 

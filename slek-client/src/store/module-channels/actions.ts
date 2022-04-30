@@ -39,6 +39,8 @@ const actions: ActionTree<ChannelsStateInterface, StateInterface> = {
       console.log(result)
     } else if (message === '/cancel') {
       channelService.leave(channel)
+    } else if (message.startsWith('/join')) {
+      console.log('join')
     }
 
     return null

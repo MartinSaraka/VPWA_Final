@@ -4,6 +4,7 @@ import { inject } from '@adonisjs/core/build/standalone'
 import User from 'App/Models/User'
 import Channel from 'App/Models/Channel'
 import Database from '@ioc:Adonis/Lucid/Database'
+import { ChannelType, UserChannelRole } from 'Contracts/enum'
 
 // inject repository from container to controller constructor
 // we do so because we can extract database specific storage to another class
@@ -68,8 +69,67 @@ export default class MessageController {
         channel_db.delete()
       }
     }
+    else if(command.startsWith("/join")){
+      let channel_type = ChannelType.PUBLIC
 
-    // TO DO other commands...
+      const parsedCommand = command.split(" ")
+      if (parsedCommand.length < 2 || parsedCommand.length > 3){
+        return null
+      }
+      else if (parsedCommand.length === 3){
+        if( parsedCommand[2] !== 'private'){
+          return null
+        }
+        channel_type = ChannelType.PRIVATE
+      }
+
+      // get user object from db
+      const user = await User.findOrFail(userId)
+
+      // find channel
+      let channel_name = parsedCommand[1]
+      const channel = await Channel.findBy("name", channel_name)
+
+      // create channel and add user to it if channel doesnt exist
+      let channel_db
+      if(channel === null){
+        channel_db = await Channel.create({
+          name: channel_name,
+          type: channel_type,
+        })
+
+        await user.related('channels').attach({
+          [channel_db.id]: {
+            role: UserChannelRole.ADMIN
+          },
+        })
+
+        // notify to join through socket
+        socket.emit('joinChannel', channel_db)
+      }
+      else{
+        // add user to channel if channel exists and isnt private and user isnt already in
+        if(channel.type === ChannelType.PUBLIC && parsedCommand.length == 2){
+          const user_in_channel = await Database
+          .from('channel_users')
+          .select('*')
+          .where("channel_users.user_id", userId)
+          .where("channel_users.channel_id", channel.id)
+          .first()
+
+          if(user_in_channel === null){
+            await user.related('channels').attach({
+              [channel.id]: {
+                role: UserChannelRole.USER
+              },
+            })
+
+            // notify to join through socket
+            socket.emit('joinChannel', channel)
+          }
+        }
+      }
+    }
 
     return null
   }
