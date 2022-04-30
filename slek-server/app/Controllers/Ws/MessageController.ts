@@ -72,7 +72,7 @@ export default class MessageController {
     else if(command.startsWith("/join")){
       let channel_type = ChannelType.PUBLIC
 
-      const parsedCommand = command.split(" ")
+      const parsedCommand = command.trim().split(" ")
       if (parsedCommand.length < 2 || parsedCommand.length > 3){
         return null
       }
