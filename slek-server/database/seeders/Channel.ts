@@ -9,11 +9,11 @@ export default class ChannelSeeder extends BaseSeeder {
     await Channel.updateOrCreateMany(uniqueKey, [
       {
         name: 'general',
-        type: ChannelType.PUBLIC
+        type: ChannelType.PUBLIC,
       },
       {
         name: 'test',
-        type: ChannelType.PUBLIC
+        type: ChannelType.PUBLIC,
       },
     ])
   }

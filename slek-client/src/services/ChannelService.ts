@@ -21,6 +21,11 @@ class ChannelSocketManager extends SocketManager {
       store.commit('channels/CLEAR_CHANNEL', channel)
     })
 
+    this.socket.on('revokeChannel', (channel: string, id : any, userId :any) => {
+      if (id !== 0) { store.dispatch('channels/revoke', { channel, id }) }
+
+      // store.commit('channels/REVOKE_CHANNEL', { channel, id, userId })
+    })
     this.socket.on('joinChannel', (channel: SerializedChannel) => {
       console.log(channel)
       store.dispatch('channels/join', channel)

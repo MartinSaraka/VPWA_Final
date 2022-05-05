@@ -1,6 +1,9 @@
 import { SerializedMessage, User } from 'src/contracts'
+import { authService } from 'src/services'
 import { MutationTree } from 'vuex'
 import { ChannelsStateInterface } from './state'
+import { AuthStateInterface } from '../module-auth/state'
+import { StateInterface } from '..'
 
 const mutation: MutationTree<ChannelsStateInterface> = {
   LOADING_START (state) {
@@ -16,6 +19,14 @@ const mutation: MutationTree<ChannelsStateInterface> = {
     state.error = error
   },
   CLEAR_CHANNEL (state, channel) {
+    state.active = null
+    delete state.messages[channel]
+    const index = state.channels.findIndex(item => item.name === channel)
+    if (index > -1) {
+      state.channels.splice(index, 1)
+    }
+  },
+  REVOKE_CHANNEL (state, { channel, id }) {
     state.active = null
     delete state.messages[channel]
     const index = state.channels.findIndex(item => item.name === channel)

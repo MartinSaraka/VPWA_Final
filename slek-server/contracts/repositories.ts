@@ -4,14 +4,14 @@ declare module '@ioc:Repositories/MessageRepository' {
   export interface SerializedMessage {
     createdBy: number
     content: string
-    channelId: number,
-    createdAt: string,
-    updatedAt: string,
-    id: number,
+    channelId: number
+    createdAt: string
+    updatedAt: string
+    id: number
     author: {
-      id: number,
-      email: string,
-      createdAt: string,
+      id: number
+      email: string
+      createdAt: string
       updatedAt: string
     }
   }
