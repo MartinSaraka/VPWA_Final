@@ -80,37 +80,47 @@ export default class MessageController {
   }
 
   public async serveInvite({ params, socket, auth }: WsContextContract, channel:string, command: string, userId: number) {
-    if(command.startsWith("/invite")){
-      const parsedCommand = command.trim().split(" ")
-      if(parsedCommand.length > 2){
-        return null
-      }
-
-      // find user in db
-      const invitedUserName = parsedCommand[1]
-      const invited_user_db = await User.findBy("nick_name", invitedUserName)
-      const channel_db = await Channel.findBy("name", channel)
-
-      // if user or channel doesnt exist
-      if(invited_user_db === null || channel_db == null) return null
-
-      const user_in_channel = await Database
-      .from('channel_users')
-      .select('*')
-      .where("channel_users.user_id", invited_user_db.id)
-      .where("channel_users.channel_id", channel_db.id)
-      .first()
-
-      if(user_in_channel === null){
-        await invited_user_db.related('channels').attach({
-          [channel_db.id]: {
-            role: UserChannelRole.USER
-          },
-        })
-
-      // notify user about invitation
-      socket.broadcast.emit('channelInvite', channel_db, invited_user_db.id)
+    const parsedCommand = command.trim().split(" ")
+    if(parsedCommand.length > 2){
+      return null
     }
+
+    // find user in db
+    const invitedUserName = parsedCommand[1]
+    const invited_user_db = await User.findBy("nick_name", invitedUserName)
+    const channel_db = await Channel.findBy("name", channel)
+
+    // if user or channel doesnt exist
+    if(invited_user_db === null || channel_db == null) return null
+
+    const sender_in_channel = await Database
+    .from('channel_users')
+    .select('*')
+    .where("channel_users.user_id", userId)
+    .where("channel_users.channel_id", channel_db.id)
+    .first()
+
+    // if channel is private only admin can make invites
+    if (sender_in_channel.role == UserChannelRole.USER && channel_db.type == ChannelType.PRIVATE){
+      return null
+    }
+
+    const user_in_channel = await Database
+    .from('channel_users')
+    .select('*')
+    .where("channel_users.user_id", invited_user_db.id)
+    .where("channel_users.channel_id", channel_db.id)
+    .first()
+
+    if(user_in_channel === null){
+      await invited_user_db.related('channels').attach({
+        [channel_db.id]: {
+          role: UserChannelRole.USER
+        },
+      })
+
+    // notify user about invitation
+    socket.broadcast.emit('channelInvite', channel_db, invited_user_db.id)
   }
 }
 
