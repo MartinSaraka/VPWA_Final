@@ -22,13 +22,17 @@ class ChannelSocketManager extends SocketManager {
     })
 
     this.socket.on('joinChannel', (channel: SerializedChannel) => {
-      console.log(channel)
+      alert(channel.name)
       store.dispatch('channels/join', channel)
     })
   }
 
   public addMessage (message: RawMessage): Promise<SerializedMessage> {
     return this.emitAsync('addMessage', message)
+  }
+
+  public addTyping (message: RawMessage): Promise<SerializedMessage> {
+    return this.emitAsync('addTyping', message)
   }
 
   public serveCommand (channel:string, message: RawMessage, userId: number): Promise<SerializedMessage> {

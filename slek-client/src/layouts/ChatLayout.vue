@@ -112,10 +112,11 @@
 
           <template v-for="(channel, index) in channels" :key="index">
             <q-item
-              v-if="channel.isTopped"
+              v-if="channel.joined_at == null"
               clickable
               v-ripple
-              @click="invitedDialog = true"
+              :active="channel.name === activeChannel"
+              @click="openInviteDialog(channel)"
             >
               <q-item-section avatar>
                 <q-icon :name="getChannelTypeIcon(channel.type)" />
@@ -360,7 +361,7 @@
 
         <q-card-section align="center">
           <div class="q-mt-md text-h5 ellipsis">
-            You were invited to VPWA channel
+            You were invited to {{invitedChannel.name}} channel
           </div>
         </q-card-section>
 
@@ -371,8 +372,15 @@
               color="primary"
               icon="check_circle"
               label="Accept"
+              @click="serveInviteDecision(true)"
             />
-            <q-btn v-close-popup color="red" icon="cancel" label="Decline" />
+            <q-btn
+              v-close-popup
+              color="red"
+              icon="cancel"
+              label="Decline"
+              @click="serveInviteDecision(false)"
+            />
           </div>
         </q-card-section>
       </q-card>
@@ -413,7 +421,7 @@
 </template>
 
 <script lang="ts">
-import { SerializedMessage } from 'src/contracts'
+import { SerializedChannel, SerializedMessage } from 'src/contracts'
 import { defineComponent } from 'vue'
 import { mapActions, mapGetters, mapMutations } from 'vuex'
 
@@ -433,6 +441,7 @@ export default defineComponent({
       createChannelTypeOptions: 'public',
       createChannelText: '',
       invitedDialog: false,
+      invitedChannel: undefined as unknown as SerializedChannel,
       notificationsQue: [] as SerializedMessage[]
     }
   },
@@ -488,6 +497,11 @@ export default defineComponent({
       }
     },
 
+    openInviteDialog (channel: SerializedChannel) {
+      this.invitedDialog = true
+      this.invitedChannel = channel
+    },
+
     showNotification (message: SerializedMessage) {
       let formattedMessageContent = message.content.slice(0, 14)
       if (message.content.length > 14) {
@@ -524,6 +538,21 @@ export default defineComponent({
     },
     getChannelTypeIcon (channelType : string) {
       if (channelType === 'public') { return channelType } else if (channelType === 'private') { return 'lock' }
+    },
+
+    async serveInviteDecision (accepted: boolean) {
+      await this.handleInviteDecision({
+        channel: this.invitedChannel.name,
+        userId: this.$store.state.auth.user?.id,
+        accepted
+      })
+    },
+
+    async sendTyping () {
+      await this.addTyping({
+        channel: this.activeChannel,
+        message: this.message
+      })
     },
 
     async send () {
@@ -576,8 +605,10 @@ export default defineComponent({
       setReceiveNotifications: 'SET_RECEIVE_ALL_NOTIFICATIONS'
     }),
     ...mapActions('auth', ['logout']),
+    ...mapActions('channels', ['addTyping']),
     ...mapActions('channels', ['addMessage']),
-    ...mapActions('channels', ['serveCommand'])
+    ...mapActions('channels', ['serveCommand']),
+    ...mapActions('channels', ['handleInviteDecision'])
   }
 })
 </script>

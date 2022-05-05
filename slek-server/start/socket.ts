@@ -19,3 +19,7 @@ Ws.namespace('channels/:name')
   .on('loadMessages', 'MessageController.loadMessages')
   .on('addMessage', 'MessageController.addMessage')
   .on('serveCommand', 'MessageController.serveCommand')
+
+Ws.namespace('/invite')
+  .on('serveInvite', 'MessageController.serveInvite')
+  .on('handleInviteDecision', 'MessageController.handleInviteDecision')
