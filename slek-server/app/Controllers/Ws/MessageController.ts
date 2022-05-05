@@ -239,8 +239,16 @@ export default class MessageController {
               },
             })
 
+          channel_db = await Database
+          .from('channel_users')
+          .select('*')
+          .where("channel_users.user_id", user.id)
+          .where("channel_users.channel_id", channel.id)
+          .join("channels", "channel_users.channel_id", "channels.id")
+          .first()
+
             // notify to join through socket
-            socket.emit('joinChannel', channel)
+            socket.emit('joinChannel', channel_db)
           }
         }
       }
