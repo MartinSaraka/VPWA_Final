@@ -47,19 +47,11 @@ const mutation: MutationTree<ChannelsStateInterface> = {
     state.isReceivingNotifications = value
   },
   ADD_CHANNEL (state, channel) {
-    state.channels.push(channel)
-
-    const tmp = [] as SerializedChannel[]
-    for (let i = 0; i < state.channels.length; i++) {
-      const stateChannel = state.channels[i]
-      if (stateChannel.joined_at === null) {
-        tmp.unshift(stateChannel)
-      } else {
-        tmp.push(stateChannel)
-      }
+    if (channel.joined_at === null) {
+      state.channels.unshift(channel)
+    } else {
+      state.channels.push(channel)
     }
-
-    state.channels = tmp
   }
 }
 

@@ -119,8 +119,16 @@ export default class MessageController {
         },
       })
 
+    const updated_channel_db = await Database
+    .from('channel_users')
+    .select('*')
+    .where("channel_users.user_id", invited_user_db.id)
+    .where("channel_users.channel_id", channel_db.id)
+    .join("channels", "channel_users.channel_id", "channels.id")
+    .first()
+
     // notify user about invitation
-    socket.broadcast.emit('channelInvite', channel_db, invited_user_db.id)
+    socket.broadcast.emit('channelInvite', updated_channel_db, invited_user_db.id)
   }
 }
 
