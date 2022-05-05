@@ -146,6 +146,34 @@ export default class MessageController {
         channel_db.delete()
       }
     }
+    else if (command.startsWith("/revoke")){
+      const channel_db = await Channel.findByOrFail("name", channel)
+      const  emitedUserRole = await Database.from('channel_users')
+      .select('channel_users.role')
+      .where("channel_users.user_id", userId)
+      .where("channel_users.channel_id", channel_db.id)
+      .first()
+      const parsedCommand = command.trim().split(" ")
+      //console.log(parsedCommand.length)
+      console.log(parsedCommand.length)
+      if (parsedCommand.length !== 2){
+        return null
+      }
+      let revokingUserName = parsedCommand[1]
+      const revokingUser = await User.findBy('nickName', revokingUserName)
+      if (revokingUser !== null && emitedUserRole.role === 'user') {
+        return null
+      } else if (revokingUser !== null && emitedUserRole.role === 'admin') {
+        //socket.to(channel_db.name).emit('leaveChannel', channel)
+
+        socket.nsp.emit('revokeChannel', channel, revokingUser.id, userId)
+        //socket.emit('leaveChannel', channel)
+        await revokingUser.related('channels').detach([channel_db.id])
+      }
+        else
+        {
+          socket.nsp.emit('revokeChannel', channel, 0, userId) }
+    }
     else if(command.startsWith("/join")){
       let channel_type = ChannelType.PUBLIC
 

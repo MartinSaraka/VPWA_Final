@@ -41,8 +41,7 @@ export default defineComponent({
   data () {
     return {
       temporaryMessages: this.messages.slice(-5),
-      messageGeneratedNumber: 5,
-      messagesLenght: this.messages.length
+      messageGeneratedNumber: 5
     }
   },
   name: 'ChannelMessagesComponent',
@@ -91,7 +90,7 @@ export default defineComponent({
     onLoad (index: number, done: (arg0: boolean) => void) {
       setTimeout(() => {
         let isDone = false
-        if (this.temporaryMessages.length + 5 >= this.messages.length) { isDone = true } else {
+        if (this.temporaryMessages.length + 5 >= this.messages.length) { this.temporaryMessages = this.messages; isDone = true } else {
           this.temporaryMessages = this.messages.slice(-this.messageGeneratedNumber)
           this.messageGeneratedNumber = this.messageGeneratedNumber + 5
         }

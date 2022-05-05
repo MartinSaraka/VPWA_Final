@@ -8,9 +8,7 @@ export default class Channels extends BaseSchema {
     this.schema.createTable(this.tableName, (table) => {
       table.increments('id').primary()
       table.string('name').notNullable().unique()
-      table.enum('type', Object.values(ChannelType))
-      .defaultTo(ChannelType.PUBLIC)
-      .notNullable()
+      table.enum('type', Object.values(ChannelType)).defaultTo(ChannelType.PUBLIC).notNullable()
 
       table.timestamp('created_at', { useTz: true })
       table.timestamp('updated_at', { useTz: true })

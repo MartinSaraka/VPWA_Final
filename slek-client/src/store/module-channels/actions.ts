@@ -37,6 +37,12 @@ const actions: ActionTree<ChannelsStateInterface, StateInterface> = {
     }
   },
 
+  async revoke ({ commit }, { channel, id }) {
+    if (id === this.state.auth.user!.id) {
+      commit('REVOKE_CHANNEL', { channel, id })
+    }
+  },
+
   async leave ({ getters, commit }, channel: string | null) {
     const leaving: string[] = channel !== null ? [channel] : getters.joinedChannels
 
@@ -72,6 +78,8 @@ const actions: ActionTree<ChannelsStateInterface, StateInterface> = {
       commit('SET_USERS', result)
     } else if (message === '/cancel') {
       channelService.leave(channel)
+    } else if (message.startsWith('/revoke')) {
+      // channelService.leave(channel)
     }
 
     return null

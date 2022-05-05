@@ -23,9 +23,10 @@ export default class ChannelUsers extends BaseSchema {
         .onDelete('CASCADE')
       table.unique(['user_id', 'channel_id'])
 
-      table.enum('role', Object.values(UserChannelRole))
-      .defaultTo(UserChannelRole.USER)
-      .notNullable()
+      table
+        .enum('role', Object.values(UserChannelRole))
+        .defaultTo(UserChannelRole.USER)
+        .notNullable()
 
       table.timestamp('joined_at', { useTz: true })
       table.timestamp('banned_at', { useTz: true })

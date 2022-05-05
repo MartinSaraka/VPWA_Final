@@ -31,4 +31,3 @@ export default class Notification extends BaseModel {
   })
   public sender: BelongsTo<typeof User>
 }
-
