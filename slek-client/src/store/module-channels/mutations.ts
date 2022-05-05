@@ -1,9 +1,6 @@
-import { SerializedMessage, User } from 'src/contracts'
-import { authService } from 'src/services'
+import { SerializedChannel, SerializedMessage, User } from 'src/contracts'
 import { MutationTree } from 'vuex'
 import { ChannelsStateInterface } from './state'
-import { AuthStateInterface } from '../module-auth/state'
-import { StateInterface } from '..'
 
 const mutation: MutationTree<ChannelsStateInterface> = {
   LOADING_START (state) {
@@ -51,6 +48,18 @@ const mutation: MutationTree<ChannelsStateInterface> = {
   },
   ADD_CHANNEL (state, channel) {
     state.channels.push(channel)
+
+    const tmp = [] as SerializedChannel[]
+    for (let i = 0; i < state.channels.length; i++) {
+      const stateChannel = state.channels[i]
+      if (stateChannel.joined_at === null) {
+        tmp.unshift(stateChannel)
+      } else {
+        tmp.push(stateChannel)
+      }
+    }
+
+    state.channels = tmp
   }
 }
 

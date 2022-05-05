@@ -27,7 +27,6 @@ class ChannelSocketManager extends SocketManager {
       // store.commit('channels/REVOKE_CHANNEL', { channel, id, userId })
     })
     this.socket.on('joinChannel', (channel: SerializedChannel) => {
-      alert(channel.name)
       store.dispatch('channels/join', channel)
     })
   }
