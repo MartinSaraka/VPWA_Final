@@ -464,19 +464,10 @@ export default defineComponent({
         this.setReceiveNotifications(this.isReceivingAllNotifications)
       }
     },
-    appVisible () {
-      if (this.appVisible) {
-        // print notifications from que
-        for (let i = 0; i < this.notificationsQue.length; i++) {
-          this.showNotification(this.notificationsQue[i])
-        }
-        this.notificationsQue = []
-      }
-    },
     currentNotification: {
       handler () {
         if (!this.appVisible && (this.isReceivingAllNotifications || this.taggedMessage(this.currentNotification.content))) {
-          this.notificationsQue.push(this.currentNotification)
+          this.showNotification(this.currentNotification)
         }
       },
       deep: true
@@ -508,14 +499,19 @@ export default defineComponent({
         formattedMessageContent += '...'
       }
       const authorNickname = message.author.nickName
-      const notification = authorNickname + ' sent a message : ' + formattedMessageContent
+      const notificationContent = authorNickname + ' sent a message : ' + formattedMessageContent
 
-      this.$q.notify({
-        message: notification,
-        position: 'top',
-        color: 'red',
-        avatar: this.getAvatar(authorNickname)
-      })
+      if (!('Notification' in window)) {
+        alert('This browser does not support desktop notification')
+      } else if (Notification.permission === 'granted') {
+        const notification = new Notification(notificationContent)
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then(function (permission) {
+          if (permission === 'granted') {
+            const notification = new Notification(notificationContent)
+          }
+        })
+      }
     },
 
     taggedMessage (message: string) {
