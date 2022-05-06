@@ -130,22 +130,51 @@ export default class MessageController {
   }
 }
 
-  public async serveCommand({ params, socket, auth }: WsContextContract, channel:string, command: string, userId: number) {
-    if (command === "/list"){
-      const channel_db = await Channel.findByOrFail("name", channel)
-     // const users = await User.query().whereHas('channels', (query) => {query.where('channels.id', channel_db.id)})
+public async getUsersList({socket}: WsContextContract, channel:string, onlineUsers : User[]) {
+  const channel_db = await Channel.findByOrFail("name", channel)
 
-      const users2 = await Database
-      .from('users')
-      .select('users.id', 'users.nick_name as nickName', 'users.name',
-              'users.surname', 'users.email', 'channel_users.role',
-              'channel_users.created_at as createdAt', 'channel_users.updated_at as updatedAt')
-      .join("channel_users", "users.id", "channel_users.user_id")
-      .where("channel_users.channel_id", channel_db.id)
+  const users_db = await Database
+  .from('users')
+  .select('users.id', 'users.nick_name as nickName', 'users.state as currentState', 'users.name',
+          'users.surname', 'users.email', 'channel_users.role',
+          'channel_users.created_at as createdAt', 'channel_users.updated_at as updatedAt')
+  .join("channel_users", "users.id", "channel_users.user_id")
+  .where("channel_users.channel_id", channel_db.id)
 
-      return users2;
+  // prejdi online so vsetkymi v DB a ak neni state null tak je typek DND
+  let final_users : User[] = []
+
+  for (let i=0; i < users_db.length; i++){
+    // user is dnd
+    if(users_db[i].currentState != null){
+      users_db[i].currentState = 'dnd'
+      final_users.push(users_db[i])
+      continue
     }
-    else if (command === "/cancel"){
+
+    // check if is online & set online
+    for (let j = 0; j < onlineUsers.length; j++) {
+      if (users_db[i].nickName === onlineUsers[j].nickName) {
+          users_db[i].currentState = 'online'
+      }
+    }
+
+    // user is offline
+    if(users_db[i].currentState === null){
+      users_db[i].currentState = 'offline'
+    }
+
+    final_users.push(users_db[i])
+  }
+
+  console.log(users_db)
+  console.log(final_users)
+
+  return final_users;
+}
+
+  public async serveCommand({ params, socket, auth }: WsContextContract, channel:string, command: string, userId: number) {
+    if (command === "/cancel"){
       const channel_db = await Channel.findByOrFail("name", channel)
       const {role} = await Database
       .from('channel_users')

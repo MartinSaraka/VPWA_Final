@@ -1,19 +1,15 @@
-import { User } from 'src/contracts'
+import { SerializedMessage, User } from 'src/contracts'
 import { authManager } from '.'
 import { BootParams, SocketManager } from './SocketManager'
 
 class ActivitySocketManager extends SocketManager {
   public subscribe ({ store }: BootParams): void {
-    this.socket.on('user:list', (onlineUsers: User[]) => {
-      console.log('Online users list', onlineUsers)
+    this.socket.on('user:list', (onlineUsers: User[], channel: string) => {
+      console.log('Online users list ' + onlineUsers + ' ' + channel)
     })
 
-    this.socket.on('user:online', (user: User) => {
-      console.log('User is online', user)
-    })
-
-    this.socket.on('user:offline', (user: User) => {
-      console.log('User is offline', user)
+    this.socket.on('user:stateChange', (user: User, currentState: string) => {
+      store.commit('channels/CHANGE_USER_STATE', { user, currentState })
     })
 
     authManager.onChange((token) => {
@@ -23,6 +19,14 @@ class ActivitySocketManager extends SocketManager {
         this.socket.disconnect()
       }
     })
+  }
+
+  public changeState (state: string) : Promise<SerializedMessage> {
+    return this.emitAsync('changeState', state)
+  }
+
+  public getOnlineUsers () : Promise<[User]> {
+    return this.emitAsync('getOnlineUsers')
   }
 }
 

@@ -1,4 +1,4 @@
-import { RawMessage, SerializedChannel, SerializedMessage } from 'src/contracts'
+import { RawMessage, SerializedChannel, SerializedMessage, User } from 'src/contracts'
 import { BootParams, SocketManager } from './SocketManager'
 import { api } from 'src/boot/axios'
 
@@ -10,11 +10,15 @@ class ChannelSocketManager extends SocketManager {
     const channel = this.namespace.split('/').pop() as string
 
     this.socket.on('message', (message: SerializedMessage) => {
-      store.commit('channels/NEW_MESSAGE', { channel, message })
+      if (store.state.auth.user?.currentState !== 'offline') {
+        store.commit('channels/NEW_MESSAGE', { channel, message })
+      }
     })
 
     this.socket.on('notification', (message: SerializedMessage) => {
-      store.commit('channels/NEW_NOTIFICATION', message)
+      if (store.state.auth.user?.currentState !== 'dnd') {
+        store.commit('channels/NEW_NOTIFICATION', message)
+      }
     })
 
     this.socket.on('leaveChannel', (channel: string) => {
@@ -45,6 +49,10 @@ class ChannelSocketManager extends SocketManager {
 
   public serveCommand (channel:string, message: RawMessage, userId: number): Promise<SerializedMessage> {
     return this.emitAsync('serveCommand', channel, message, userId)
+  }
+
+  public getUsersList (channel : string, onlineUsers : User[]): Promise<User[]> {
+    return this.emitAsync('getUsersList', channel, onlineUsers)
   }
 
   public loadMessages (): Promise<SerializedMessage[]> {

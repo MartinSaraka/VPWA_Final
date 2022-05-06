@@ -37,6 +37,19 @@ const mutation: MutationTree<ChannelsStateInterface> = {
   SET_USERS (state, users: User[]) {
     state.users = users
   },
+  CHANGE_USER_STATE (state, { user, currentState } : { user: User, currentState: string}) {
+    for (let i = 0; i < state.users.length; i++) {
+      const tmpUser = state.users[i]
+      if (tmpUser.nickName === user.nickName) {
+        state.users[i].currentState = currentState
+        break
+      }
+    }
+  },
+
+  SET_MESSAGES (state, { channel, messages }: { channel: string, messages: SerializedMessage[] }) {
+    state.messages[channel] = messages
+  },
   NEW_MESSAGE (state, { channel, message }: { channel: string, message: SerializedMessage }) {
     state.messages[channel].push(message)
   },

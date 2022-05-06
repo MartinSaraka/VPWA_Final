@@ -1,7 +1,7 @@
 import { ActionTree } from 'vuex'
 import { StateInterface } from '../index'
 import { ChannelsStateInterface } from './state'
-import { channelService, inviteService } from 'src/services'
+import { activityService, channelService, inviteService } from 'src/services'
 import { RawMessage, SerializedChannel } from 'src/contracts'
 
 const actions: ActionTree<ChannelsStateInterface, StateInterface> = {
@@ -65,6 +65,22 @@ const actions: ActionTree<ChannelsStateInterface, StateInterface> = {
     commit('RECEIVED_TYPING', { channel, message, userNickname })
   },
 
+  async changeState ({ commit, dispatch }, currentState : string) {
+    // if state changed to online/dnd update messages
+    if ((currentState === 'online' || currentState === 'dnd') && this.state.auth.user !== null) {
+      const channels = await channelService.getAll(this.state.auth.user.id)
+      let channelName, messages
+      for (let i = 0; i < channels.length; i++) {
+        channelName = channels[i].name
+        messages = await channelService.in(channelName)?.loadMessages()
+        commit('SET_MESSAGES', { channel: channelName, messages })
+      }
+    }
+
+    // notify users about status change
+    activityService.changeState(currentState)
+  },
+
   async handleInviteDecision ({ commit }, { channel, userId, accepted }: { channel: string, userId: number, accepted: boolean }) {
     channelService.leave(channel)
     commit('CLEAR_CHANNEL', channel)
@@ -75,13 +91,15 @@ const actions: ActionTree<ChannelsStateInterface, StateInterface> = {
     let result
     if (message.startsWith('/invite')) {
       result = await inviteService.serveInvite(channel, message, userId)
+    } else if (message === '/list') {
+      const onlineUsers = await activityService.getOnlineUsers()
+      result = await channelService.in(channel)?.getUsersList(channel, onlineUsers)
+      commit('SET_USERS', result)
     } else {
       result = await channelService.in(channel)?.serveCommand(channel, message, userId)
     }
 
-    if (message === '/list') {
-      commit('SET_USERS', result)
-    } else if (message === '/cancel') {
+    if (message === '/cancel') {
       channelService.leave(channel)
     } else if (message.startsWith('/revoke')) {
       // channelService.leave(channel)

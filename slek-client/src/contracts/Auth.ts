@@ -22,9 +22,10 @@ export interface LoginCredentials {
 
 export interface User {
   id: number
-  nickName:string
-  name:string
-  surname:string
+  currentState: string
+  nickName: string
+  name: string
+  surname: string
   email: string
   role: string
   createdAt: string

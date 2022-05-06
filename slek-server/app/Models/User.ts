@@ -21,6 +21,9 @@ export default class User extends BaseModel {
   public nickName: string
 
   @column()
+  public state: string | null // save dnd
+
+  @column()
   public name: string
 
   @column()

@@ -6,6 +6,19 @@ export default class ActivityController {
     return `user:${user.id}`
   }
 
+  public async getOnlineUsers({ socket }: WsContextContract) {
+    const allSockets = await socket.nsp.fetchSockets()
+    const onlineIds = new Set<number>()
+
+    for (const remoteSocket of allSockets) {
+      onlineIds.add(remoteSocket.data.userId)
+    }
+
+    const onlineUsers = await User.findMany([...onlineIds])
+
+    return onlineUsers
+  }
+
   public async onConnected({ socket, auth, logger }: WsContextContract) {
     // all connections for the same authenticated user will be in the room
     const room = this.getUserRoom(auth.user!)
@@ -31,7 +44,13 @@ export default class ActivityController {
 
     const onlineUsers = await User.findMany([...onlineIds])
 
+    // not dnd anymore -> change state to null
+    const user = await User.findOrFail(auth.user?.id)
+    user.state = null
+    user?.save()
+
     socket.emit('user:list', onlineUsers)
+    socket.nsp.emit('user:stateChange', auth.user, 'online')
 
     logger.info('new websocket connection')
   }
@@ -43,10 +62,21 @@ export default class ActivityController {
 
     // user is disconnected
     if (userSockets.size === 0) {
-      // notify other users
-      socket.broadcast.emit('user:offline', auth.user)
-    }
+      // not dnd anymore -> change state to null
+      const user = await User.findOrFail(auth.user?.id)
+      user.state = null
+      user?.save()
 
-    logger.info('websocket disconnected', reason)
+      socket.nsp.emit('user:stateChange', auth.user, 'offline')
+    }
+  }
+
+  public async changeState({ socket, auth }: WsContextContract, state: string) {
+    if(state === 'dnd'){
+      const user = await User.findOrFail(auth.user?.id)
+      user.state = 'dnd'
+      user?.save()
+    }
+    socket.nsp.emit('user:stateChange', auth.user, state)
   }
 }

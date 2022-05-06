@@ -61,6 +61,9 @@ const actions: ActionTree<AuthStateInterface, StateInterface> = {
       commit('AUTH_ERROR', err)
       throw err
     }
+  },
+  async changeUserState ({ commit }, currentState: string) {
+    commit('CHANGE_USER_STATE', currentState)
   }
 }
 

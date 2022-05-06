@@ -175,7 +175,7 @@
             <q-item-section avatar>
               <q-avatar rounded color="primary" text-color="white">
                 {{user.nickName[0]}}
-                <q-badge floating rounded color="green" />
+                <q-badge floating rounded :color="getUserStateColor(user.currentState)" />
               </q-avatar>
             </q-item-section>
             <q-item-section class="text-center text-subtitle1">{{user.nickName}}</q-item-section>
@@ -404,7 +404,10 @@
         <template v-for="(user, index) in users" :key="index">
           <q-item v-ripple>
             <q-item-section avatar>
-              <q-avatar rounded color="primary" text-color="white">{{user.nickName[0]}}</q-avatar>
+              <q-avatar rounded color="primary" text-color="white">
+                {{user.nickName[0]}}
+                <q-badge floating rounded :color="getUserStateColor(user.currentState)" />
+              </q-avatar>
             </q-item-section>
             <q-item-section>{{user.nickName}}</q-item-section>
                         <q-item-section avatar>
@@ -460,6 +463,12 @@ export default defineComponent({
     }
   },
   watch: {
+    statePick: {
+      handler () {
+        this.changeUserState(this.statePick)
+        this.changeState(this.statePick)
+      }
+    },
     isReceivingAllNotifications: {
       handler () {
         this.setReceiveNotifications(this.isReceivingAllNotifications)
@@ -521,6 +530,19 @@ export default defineComponent({
         return true
       }
       return false
+    },
+
+    getUserStateColor (state: string) {
+      // alert(state)
+      if (state === 'online') {
+        return 'green'
+      } else if (state === 'dnd') {
+        return 'orange'
+      } else if (state === 'offline') {
+        return 'grey'
+      } else {
+        return 'red'
+      }
     },
 
     getPanelIcon (role: string) {
@@ -608,10 +630,12 @@ export default defineComponent({
       setReceiveNotifications: 'SET_RECEIVE_ALL_NOTIFICATIONS'
     }),
     ...mapActions('auth', ['logout']),
+    ...mapActions('auth', ['changeUserState']),
     ...mapActions('channels', ['addTyping']),
     ...mapActions('channels', ['addMessage']),
     ...mapActions('channels', ['serveCommand']),
-    ...mapActions('channels', ['handleInviteDecision'])
+    ...mapActions('channels', ['handleInviteDecision']),
+    ...mapActions('channels', ['changeState'])
   }
 })
 </script>
