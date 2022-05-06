@@ -1,45 +1,63 @@
 <template>
-  <q-infinite-scroll style="width: 100%; height: calc(100vh - 150px); margin-bottom: 150px;"
+  <q-infinite-scroll class="q-px-md" style="width: 100%;"
   @load="onLoad" reverse>
 
- <template v-slot:loading>
-        <div class="row justify-center q-my-md">
-          <q-spinner color="primary" name="dots" size="40px" />
-        </div>
-      </template>
+    <template v-slot:loading>
+      <div class="row justify-center q-my-md">
+        <q-spinner color="primary" name="dots" size="40px" />
+      </div>
+    </template>
 
-      <q-chat-message v-for="message in temporaryMessages"
-        class="q-mt-md"
-        text-color="black"
-        :bg-color = "[taggedMessage(message.content) ? red() : null]"
-        :key="message.id"
-        :avatar="getAvatar(message.author.nickName)"
-        :name="message.author.nickName"
-        :text="[message.content]"
-        :stamp="message.createdAt"
-        :sent="isMine(message)"
-      />
+    <q-chat-message v-for="message in temporaryMessages"
+      class="q-mt-md"
+      text-color="black"
+      :bg-color = "[taggedMessage(message.content) ? red() : null]"
+      :key="message.id"
+      :avatar="getAvatar(message.author.nickName)"
+      :name="message.author.nickName"
+      :text="[message.content]"
+      :stamp="message.createdAt"
+      :sent="isMine(message)"
+    />
 
-      <!--
-      <q-chat-message
-          name="Martin"
-          :avatar="getAvatar('Martin')"
-          bg-color="amber"
-        >
-          <div>
-            Martin is typing
-            <q-spinner-dots class="q-ml-sm" size="2rem" />
-          </div>
-        </q-chat-message>
-      -->
+    <q-chat-message v-for="typer in typers"
+      class="q-mt-md"
+      bg-color="amber"
+      :key="typer.name"
+      :name=typer.name
+      :avatar="getAvatar(typer.name)"
+    >
+      <div>
+        <q-btn outline class="q-mr-sm" @click="setOpenedTyper({channel: activeChannel, userNickname: typer.name, value: true})">{{typer.name}}</q-btn> is typing
+        <q-spinner-dots class="q-ml-sm" size="2rem" />
 
-      </q-infinite-scroll>
+        <q-dialog v-model="typer.isOpened" persistent>
+          <q-card style="width: 700px; max-width: 80vw">
+            <q-card-actions align="right" class="q-mb-none">
+              <q-btn dense flat icon="close" @click="setOpenedTyper({channel: activeChannel, userNickname: typer.name, value: false})">
+                <q-tooltip>Close</q-tooltip>
+              </q-btn>
+            </q-card-actions>
+
+            <q-card-section align="center">
+              <div class="q-mb-md q-mt-sm text-h6">
+              {{typer.name}} is typing: {{typer.message}}
+              </div>
+            </q-card-section>
+          </q-card>
+        </q-dialog>
+      </div>
+    </q-chat-message>
+
+  </q-infinite-scroll>
 </template>
 
 <script lang="ts">
 import { QScrollArea } from 'quasar'
-import { SerializedMessage } from 'src/contracts'
+import { SerializedMessage, TyperWithMessage } from 'src/contracts'
 import { defineComponent, PropType } from 'vue'
+import { mapMutations } from 'vuex'
+
 export default defineComponent({
   data () {
     return {
@@ -52,11 +70,14 @@ export default defineComponent({
     messages: {
       type: Array as PropType<SerializedMessage[]>,
       default: () => []
+    },
+    typers: {
+      type: Array as PropType<TyperWithMessage[]>,
+      default: () => []
     }
   },
   watch: {
     messages: {
-
       handler () {
         this.$nextTick(() => this.scrollMessages())
         this.fixArrays()
@@ -67,6 +88,9 @@ export default defineComponent({
   computed: {
     currentUser () {
       return this.$store.state.auth.user?.id
+    },
+    activeChannel () {
+      return this.$store.state.channels.active
     }
   },
   methods: {
@@ -101,7 +125,10 @@ export default defineComponent({
 
         done(isDone)
       }, 2000)
-    }
+    },
+    ...mapMutations('channels', {
+      setOpenedTyper: 'SET_OPENED_TYPER'
+    })
   }
 })
 </script>

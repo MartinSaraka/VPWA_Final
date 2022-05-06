@@ -51,13 +51,18 @@ const actions: ActionTree<ChannelsStateInterface, StateInterface> = {
       commit('CLEAR_CHANNEL', c)
     })
   },
+
   async addMessage ({ commit }, { channel, message }: { channel: string, message: RawMessage }) {
     const newMessage = await channelService.in(channel)?.addMessage(message)
     commit('NEW_MESSAGE', { channel, message: newMessage })
   },
 
   async addTyping ({ commit }, { channel, message }: { channel: string, message: RawMessage }) {
-    await channelService.in(channel)?.addTyping(message)
+    await channelService.in(channel)?.addTyping(channel, message)
+  },
+
+  async receivedTyping ({ commit }, { channel, message, userNickname }: { channel: string, message: string, userNickname: string }) {
+    commit('RECEIVED_TYPING', { channel, message, userNickname })
   },
 
   async handleInviteDecision ({ commit }, { channel, userId, accepted }: { channel: string, userId: number, accepted: boolean }) {

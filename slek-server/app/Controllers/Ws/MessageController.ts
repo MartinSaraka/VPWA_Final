@@ -38,11 +38,9 @@ export default class MessageController {
     return message
   }
 
-  public async addTyping({ params, socket, auth }: WsContextContract, content: string) {
-    const message = await this.messageRepository.create(params.name, auth.user!.id, content)
-
+  public async addTyping({ params, socket, auth }: WsContextContract, channel: string, content: string) {
     // broadcast message to other users in channel
-    socket.broadcast.emit('typing', message, auth.user!.id)
+    socket.broadcast.emit('typing', channel, content, auth.user?.nickName)
 
     return null
   }

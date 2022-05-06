@@ -225,6 +225,7 @@
         v-model="message"
         :disable="loading"
         @keydown.enter.prevent="send"
+        @keyup="sendTyping()"
         rounded
         outlined
         dense
@@ -563,6 +564,12 @@ export default defineComponent({
             userId: this.$store.state.auth.user?.id
           })
         } else {
+          // delete is typing
+          await this.addTyping({
+            channel: this.activeChannel,
+            message: ''
+          })
+
           await this.addMessage({
             channel: this.activeChannel,
             message: this.message,

@@ -11,3 +11,8 @@ export interface SerializedMessage {
   id: number,
   author: User
 }
+export interface TyperWithMessage{
+  name: string
+  message: string
+  isOpened: boolean
+}
