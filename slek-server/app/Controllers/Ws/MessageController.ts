@@ -5,6 +5,7 @@ import User from 'App/Models/User'
 import Channel from 'App/Models/Channel'
 import Database from '@ioc:Adonis/Lucid/Database'
 import { ChannelType, UserChannelRole } from 'Contracts/enum'
+import { DateTime } from 'luxon'
 
 // inject repository from container to controller constructor
 // we do so because we can extract database specific storage to another class
@@ -14,7 +15,7 @@ import { ChannelType, UserChannelRole } from 'Contracts/enum'
 // implementation is bind into container inside providers/AppProvider.ts
 @inject(['Repositories/MessageRepository'])
 export default class MessageController {
-  constructor (private messageRepository: MessageRepositoryContract) {}
+  constructor(private messageRepository: MessageRepositoryContract) { }
 
   private getUserRoom(user: User): string {
     return `user:${user.id}`
@@ -37,49 +38,63 @@ export default class MessageController {
     return message
   }
 
-  public async serveCommand({ params, socket, auth }: WsContextContract, channel:string, command: string, userId: number) {
-    if (command === "/list"){
+  public async serveCommand({ params, socket, auth }: WsContextContract, channel: string, command: string, userId: number) {
+    if (command === "/list") {
       const channel_db = await Channel.findByOrFail("name", channel)
-     // const users = await User.query().whereHas('channels', (query) => {query.where('channels.id', channel_db.id)})
+      // const users = await User.query().whereHas('channels', (query) => {query.where('channels.id', channel_db.id)})
 
       const users2 = await Database
-      .from('users')
-      .select('users.id', 'users.nick_name as nickName', 'users.name',
-              'users.surname', 'users.email', 'channel_users.role',
-              'channel_users.created_at as createdAt', 'channel_users.updated_at as updatedAt')
-      .join("channel_users", "users.id", "channel_users.user_id")
-      .where("channel_users.channel_id", channel_db.id)
+        .from('users')
+        .select('users.id', 'users.nick_name as nickName', 'users.name',
+          'users.surname', 'users.email', 'channel_users.role',
+          'channel_users.created_at as createdAt', 'channel_users.updated_at as updatedAt')
+        .join("channel_users", "users.id", "channel_users.user_id")
+        .where("channel_users.channel_id", channel_db.id)
 
       return users2;
     }
-    else if (command === "/cancel"){
+    else if (command === "/cancel") {
       const channel_db = await Channel.findByOrFail("name", channel)
-      const {role} = await Database
-      .from('channel_users')
-      .select('role')
-      .where("channel_users.user_id", userId).first()
+      const emitedUserRole = await Database.from('channel_users')
+        .select('channel_users.role')
+        .where("channel_users.user_id", userId)
+        .where("channel_users.channel_id", channel_db.id)
+        .first()
 
-      if (role === 'user'){
+      if (emitedUserRole.role === 'user') {
         socket.emit('leaveChannel', channel)
         const user = await User.findOrFail(userId)
         await user.related('channels').detach([channel_db.id])
       }
-      else if(role === 'admin'){
+      else if (emitedUserRole.role === 'admin') {
         socket.nsp.emit("leaveChannel", channel)
         channel_db.delete()
       }
     }
-    else if (command.startsWith("/revoke")){
+    else if (command === "/quit") {
+      console.log('hm')
       const channel_db = await Channel.findByOrFail("name", channel)
-      const  emitedUserRole = await Database.from('channel_users')
-      .select('channel_users.role')
-      .where("channel_users.user_id", userId)
-      .where("channel_users.channel_id", channel_db.id)
-      .first()
+      const emitedUserRole = await Database.from('channel_users')
+        .select('channel_users.role')
+        .where("channel_users.user_id", userId)
+        .where("channel_users.channel_id", channel_db.id)
+        .first()
+      if (emitedUserRole.role === 'admin') {
+        socket.nsp.emit("leaveChannel", channel)
+        channel_db.delete()
+      }
+    }
+    else if (command.startsWith("/revoke")) {
+      const channel_db = await Channel.findByOrFail("name", channel)
+      const emitedUserRole = await Database.from('channel_users')
+        .select('channel_users.role')
+        .where("channel_users.user_id", userId)
+        .where("channel_users.channel_id", channel_db.id)
+        .first()
       const parsedCommand = command.trim().split(" ")
       //console.log(parsedCommand.length)
       console.log(parsedCommand.length)
-      if (parsedCommand.length !== 2){
+      if (parsedCommand.length !== 2) {
         return null
       }
       let revokingUserName = parsedCommand[1]
@@ -93,19 +108,140 @@ export default class MessageController {
         //socket.emit('leaveChannel', channel)
         await revokingUser.related('channels').detach([channel_db.id])
       }
-        else
-        {
-          socket.nsp.emit('revokeChannel', channel, 0, userId) }
+      else {
+        socket.nsp.emit('revokeChannel', channel, 0, userId)
+      }
     }
-    else if(command.startsWith("/join")){
+    else if (command.startsWith("/kick")) {
+      console.log('1')
+      const channel_db = await Channel.findByOrFail("name", channel)
+      const emitedUserRole = await Database.from('channel_users')
+        .select('channel_users.role')
+        .where("channel_users.user_id", userId)
+        .where("channel_users.channel_id", channel_db.id)
+        .first()
+
+        console.log('2')
+      const parsedCommand = command.trim().split(" ")
+
+      if (parsedCommand.length !== 2) {
+        return null
+      }
+      let kickedUserName = parsedCommand[1]
+      const kickedUser = await User.findBy('nickName', kickedUserName)
+      console.log('hm')
+      if (kickedUser === null ){
+        console.log('return null 1')
+        return null}
+        console.log('3')
+      const emitedUserTable = await Database.from('channel_users')
+        .select('*')
+        .where("channel_users.user_id", kickedUser.id)
+        .where("channel_users.channel_id", channel_db.id)
+        .first()
+
+
+
+      console.log(emitedUserTable)
+
+
+      if(emitedUserTable ===null){
+        console.log('2')
+        return null}
+      if(emitedUserRole.role === 'user') {
+        console.log('5')
+
+        const user_in_channel = await Database
+          .from('channel_users_bans')
+          .select('*')
+          .where("channel_users_bans.user_id", kickedUser.id)
+          .where("channel_users_bans.sender_id", userId)
+          .where("channel_users_bans.channel_id", channel_db.id)
+          .first()
+
+        console.log('hm1')
+        if (user_in_channel === null) {
+          console.log('som pri vytvarani')
+          console.log(kickedUser.name + ' ' + channel_db.id)
+          //await kickedUser.related('channels').attach([channel_db.id])
+
+
+
+
+          await kickedUser.related('bans').attach({
+            [channel_db.id]: {
+              sender_id:userId,
+              role: UserChannelRole.USER
+
+            },
+          })
+
+
+
+          const users_in_channel1 = await Database.rawQuery('Select * from channel_users_bans where channel_users_bans.user_id = ? AND channel_users_bans.channel_id = ?', [kickedUser.id,channel_db.id])
+          //const users_in_channel2 = await Database.rawQuery('Select channel_users_bans.role from channel_users_bans where channel_users_bans.user_id = ? AND channel_users_bans.channel_id = ?', [kickedUser.id,channel_db.id])
+          if(users_in_channel1.length >= 3){
+
+          await kickedUser.related('bans').sync({
+              [channel_db.id]: {
+                banned_at: DateTime.now().toFormat('dd LLL yyyy HH:mm')
+              },
+            }, false)
+
+            console.log('treti kick - je bannuty a kicknuty')
+            socket.nsp.emit('revokeChannel', channel, kickedUser.id, userId)
+        //socket.emit('leaveChannel', channel)
+        await kickedUser.related('channels').detach([channel_db.id])
+          }
+          console.log('vytvoril som')
+
+
+        }
+        else{console.log('uz je')}
+
+      }
+      else if (kickedUser !== null && emitedUserRole.role === 'admin') {
+
+        const user_in_channel = await Database
+          .from('channel_users_bans')
+          .select('*')
+          .where("channel_users_bans.user_id", kickedUser.id)
+          .where("channel_users_bans.sender_id", userId)
+          .where("channel_users_bans.channel_id", channel_db.id)
+          .first()
+
+        console.log('hm1')
+
+        if (user_in_channel === null) {
+        await kickedUser.related('bans').attach({
+          [channel_db.id]: {
+            sender_id:userId,
+            role: UserChannelRole.ADMIN
+
+          },
+        })
+        await kickedUser.related('bans').sync({
+          [channel_db.id]: {
+            banned_at: DateTime.now().toFormat('dd LLL yyyy HH:mm')
+          },
+        }, false)
+        socket.nsp.emit('revokeChannel', channel, kickedUser.id, userId)
+        //socket.emit('leaveChannel', channel)
+        await kickedUser.related('channels').detach([channel_db.id])}
+      }
+      console.log('hm2')
+      }
+
+
+    else if (command.startsWith("/join")) {
       let channel_type = ChannelType.PUBLIC
 
       const parsedCommand = command.trim().split(" ")
-      if (parsedCommand.length < 2 || parsedCommand.length > 3){
+      if (parsedCommand.length < 2 || parsedCommand.length > 3) {
         return null
       }
-      else if (parsedCommand.length === 3){
-        if( parsedCommand[2] !== 'private'){
+      else if (parsedCommand.length === 3) {
+        if (parsedCommand[2] !== 'private') {
           return null
         }
         channel_type = ChannelType.PRIVATE
@@ -120,7 +256,7 @@ export default class MessageController {
 
       // create channel and add user to it if channel doesnt exist
       let channel_db
-      if(channel === null){
+      if (channel === null) {
         channel_db = await Channel.create({
           name: channel_name,
           type: channel_type,
@@ -135,17 +271,17 @@ export default class MessageController {
         // notify to join through socket
         socket.emit('joinChannel', channel_db)
       }
-      else{
+      else {
         // add user to channel if channel exists and isnt private and user isnt already in
-        if(channel.type === ChannelType.PUBLIC && parsedCommand.length == 2){
+        if (channel.type === ChannelType.PUBLIC && parsedCommand.length == 2) {
           const user_in_channel = await Database
-          .from('channel_users')
-          .select('*')
-          .where("channel_users.user_id", userId)
-          .where("channel_users.channel_id", channel.id)
-          .first()
+            .from('channel_users')
+            .select('*')
+            .where("channel_users.user_id", userId)
+            .where("channel_users.channel_id", channel.id)
+            .first()
 
-          if(user_in_channel === null){
+          if (user_in_channel === null) {
             await user.related('channels').attach({
               [channel.id]: {
                 role: UserChannelRole.USER

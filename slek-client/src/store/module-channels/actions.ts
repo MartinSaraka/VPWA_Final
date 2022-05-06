@@ -21,6 +21,7 @@ const actions: ActionTree<ChannelsStateInterface, StateInterface> = {
   },
   async revoke ({ commit }, { channel, id }) {
     if (id === this.state.auth.user!.id) {
+      alert('Bol si vyhodený z kanála ' + channel)
       commit('REVOKE_CHANNEL', { channel, id })
     }
   },
