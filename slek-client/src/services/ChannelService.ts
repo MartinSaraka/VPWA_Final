@@ -32,13 +32,20 @@ class ChannelSocketManager extends SocketManager {
       // store.commit('channels/REVOKE_CHANNEL', { channel, id, userId })
     })
     this.socket.on('joinChannel', (channel: SerializedChannel) => {
-      console.log(channel)
       store.dispatch('channels/join', channel)
+    })
+
+    this.socket.on('typing', (channel: string, message: string, userNickname: string) => {
+      store.dispatch('channels/receivedTyping', { channel, message, userNickname })
     })
   }
 
   public addMessage (message: RawMessage): Promise<SerializedMessage> {
     return this.emitAsync('addMessage', message)
+  }
+
+  public addTyping (channel: string, message: RawMessage): Promise<SerializedMessage> {
+    return this.emitAsync('addTyping', channel, message)
   }
 
   public serveCommand (channel:string, message: RawMessage, userId: number): Promise<SerializedMessage> {

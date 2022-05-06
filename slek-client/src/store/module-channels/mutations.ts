@@ -1,9 +1,6 @@
 import { SerializedMessage, User } from 'src/contracts'
-import { authService } from 'src/services'
 import { MutationTree } from 'vuex'
 import { ChannelsStateInterface } from './state'
-import { AuthStateInterface } from '../module-auth/state'
-import { StateInterface } from '..'
 
 const mutation: MutationTree<ChannelsStateInterface> = {
   LOADING_START (state) {
@@ -49,8 +46,39 @@ const mutation: MutationTree<ChannelsStateInterface> = {
   SET_RECEIVE_ALL_NOTIFICATIONS (state, value) {
     state.isReceivingNotifications = value
   },
+  RECEIVED_TYPING (state, { channel, message, userNickname }: {channel : string, message : string, userNickname : string }) {
+    if (state.typers[channel] === undefined) {
+      state.typers[channel] = [{ name: userNickname, message, isOpened: false }]
+    } else {
+      let foundIndex = -1
+      for (let i = 0; i < state.typers[channel].length; i++) {
+        if (state.typers[channel][i].name === userNickname) {
+          state.typers[channel][i].message = message
+          foundIndex = i
+          break
+        }
+      }
+      if (foundIndex === -1) {
+        state.typers[channel].push({ name: userNickname, message, isOpened: false })
+      } else if (message === '') {
+        state.typers[channel].splice(foundIndex, 1)
+      }
+    }
+  },
+  SET_OPENED_TYPER (state, { channel, userNickname, value }: {channel : string, userNickname : string, value: boolean }) {
+    for (let i = 0; i < state.typers[channel].length; i++) {
+      if (state.typers[channel][i].name === userNickname) {
+        state.typers[channel][i].isOpened = value
+        break
+      }
+    }
+  },
   ADD_CHANNEL (state, channel) {
-    state.channels.push(channel)
+    if (channel.joined_at === null) {
+      state.channels.unshift(channel)
+    } else {
+      state.channels.push(channel)
+    }
   }
 }
 

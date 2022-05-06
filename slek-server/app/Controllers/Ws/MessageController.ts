@@ -38,8 +38,100 @@ export default class MessageController {
     return message
   }
 
-  public async serveCommand({ params, socket, auth }: WsContextContract, channel: string, command: string, userId: number) {
-    if (command === "/list") {
+  public async addTyping({ params, socket, auth }: WsContextContract, channel: string, content: string) {
+    // broadcast message to other users in channel
+    socket.broadcast.emit('typing', channel, content, auth.user?.nickName)
+
+    return null
+  }
+
+  public async handleInviteDecision({ params, socket, auth }: WsContextContract, channel:string, userId: number,  accepted: boolean) {
+    const invited_user_db = await User.find(userId)
+    let channel_db = await Channel.findBy("name", channel)
+
+    // if user or channel doesnt exist
+    if(invited_user_db === null || channel_db == null) return null
+
+    if(!accepted){
+      await invited_user_db.related('channels').detach([channel_db.id])
+      return null
+    }
+
+    await invited_user_db.related('channels').sync({
+      [channel_db.id]: {
+        joined_at: DateTime.now().toFormat('dd LLL yyyy HH:mm')
+      },
+    }, false)
+
+    const updated_channel_db = await Database
+    .from('channel_users')
+    .select('*')
+    .where("channel_users.user_id", userId)
+    .where("channel_users.channel_id", channel_db.id)
+    .join("channels", "channel_users.channel_id", "channels.id")
+    .first()
+
+    // notify to join through socket
+    socket.emit('joinChannel', updated_channel_db)
+
+    return null
+  }
+
+  public async serveInvite({ params, socket, auth }: WsContextContract, channel:string, command: string, userId: number) {
+    const parsedCommand = command.trim().split(" ")
+    if(parsedCommand.length > 2){
+      return null
+    }
+
+    // find user in db
+    const invitedUserName = parsedCommand[1]
+    const invited_user_db = await User.findBy("nick_name", invitedUserName)
+    const channel_db = await Channel.findBy("name", channel)
+
+    // if user or channel doesnt exist
+    if(invited_user_db === null || channel_db == null) return null
+
+    const sender_in_channel = await Database
+    .from('channel_users')
+    .select('*')
+    .where("channel_users.user_id", userId)
+    .where("channel_users.channel_id", channel_db.id)
+    .first()
+
+    // if channel is private only admin can make invites
+    if (sender_in_channel.role == UserChannelRole.USER && channel_db.type == ChannelType.PRIVATE){
+      return null
+    }
+
+    const user_in_channel = await Database
+    .from('channel_users')
+    .select('*')
+    .where("channel_users.user_id", invited_user_db.id)
+    .where("channel_users.channel_id", channel_db.id)
+    .first()
+
+    if(user_in_channel === null){
+      await invited_user_db.related('channels').attach({
+        [channel_db.id]: {
+          role: UserChannelRole.USER
+        },
+      })
+
+    const updated_channel_db = await Database
+    .from('channel_users')
+    .select('*')
+    .where("channel_users.user_id", invited_user_db.id)
+    .where("channel_users.channel_id", channel_db.id)
+    .join("channels", "channel_users.channel_id", "channels.id")
+    .first()
+
+    // notify user about invitation
+    socket.broadcast.emit('channelInvite', updated_channel_db, invited_user_db.id)
+  }
+}
+
+  public async serveCommand({ params, socket, auth }: WsContextContract, channel:string, command: string, userId: number) {
+    if (command === "/list"){
       const channel_db = await Channel.findByOrFail("name", channel)
       // const users = await User.query().whereHas('channels', (query) => {query.where('channels.id', channel_db.id)})
 
@@ -264,9 +356,18 @@ export default class MessageController {
 
         await user.related('channels').attach({
           [channel_db.id]: {
-            role: UserChannelRole.ADMIN
+            role: UserChannelRole.ADMIN,
+            joined_at: DateTime.now().toFormat('dd LLL yyyy HH:mm')
           },
         })
+
+        channel_db = await Database
+        .from('channel_users')
+        .select('*')
+        .where("channel_users.user_id", user.id)
+        .where("channel_users.channel_id", channel_db.id)
+        .join("channels", "channel_users.channel_id", "channels.id")
+        .first()
 
         // notify to join through socket
         socket.emit('joinChannel', channel_db)
@@ -284,12 +385,21 @@ export default class MessageController {
           if (user_in_channel === null) {
             await user.related('channels').attach({
               [channel.id]: {
-                role: UserChannelRole.USER
+                role: UserChannelRole.USER,
+                joined_at: DateTime.now().toFormat('dd LLL yyyy HH:mm')
               },
             })
 
+          channel_db = await Database
+          .from('channel_users')
+          .select('*')
+          .where("channel_users.user_id", user.id)
+          .where("channel_users.channel_id", channel.id)
+          .join("channels", "channel_users.channel_id", "channels.id")
+          .first()
+
             // notify to join through socket
-            socket.emit('joinChannel', channel)
+            socket.emit('joinChannel', channel_db)
           }
         }
       }

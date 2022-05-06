@@ -1,9 +1,9 @@
 import { User } from 'src/contracts'
 import { authManager } from '.'
-import { SocketManager } from './SocketManager'
+import { BootParams, SocketManager } from './SocketManager'
 
 class ActivitySocketManager extends SocketManager {
-  public subscribe (): void {
+  public subscribe ({ store }: BootParams): void {
     this.socket.on('user:list', (onlineUsers: User[]) => {
       console.log('Online users list', onlineUsers)
     })
