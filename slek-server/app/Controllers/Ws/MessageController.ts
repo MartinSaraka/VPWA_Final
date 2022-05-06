@@ -45,14 +45,14 @@ export default class MessageController {
     return null
   }
 
-  public async handleInviteDecision({ params, socket, auth }: WsContextContract, channel:string, userId: number,  accepted: boolean) {
+  public async handleInviteDecision({ params, socket, auth }: WsContextContract, channel: string, userId: number, accepted: boolean) {
     const invited_user_db = await User.find(userId)
     let channel_db = await Channel.findBy("name", channel)
 
     // if user or channel doesnt exist
-    if(invited_user_db === null || channel_db == null) return null
+    if (invited_user_db === null || channel_db == null) return null
 
-    if(!accepted){
+    if (!accepted) {
       await invited_user_db.related('channels').detach([channel_db.id])
       return null
     }
@@ -64,12 +64,12 @@ export default class MessageController {
     }, false)
 
     const updated_channel_db = await Database
-    .from('channel_users')
-    .select('*')
-    .where("channel_users.user_id", userId)
-    .where("channel_users.channel_id", channel_db.id)
-    .join("channels", "channel_users.channel_id", "channels.id")
-    .first()
+      .from('channel_users')
+      .select('*')
+      .where("channel_users.user_id", userId)
+      .where("channel_users.channel_id", channel_db.id)
+      .join("channels", "channel_users.channel_id", "channels.id")
+      .first()
 
     // notify to join through socket
     socket.emit('joinChannel', updated_channel_db)
@@ -77,9 +77,9 @@ export default class MessageController {
     return null
   }
 
-  public async serveInvite({ params, socket, auth }: WsContextContract, channel:string, command: string, userId: number) {
+  public async serveInvite({ params, socket, auth }: WsContextContract, channel: string, command: string, userId: number) {
     const parsedCommand = command.trim().split(" ")
-    if(parsedCommand.length > 2){
+    if (parsedCommand.length > 2) {
       return null
     }
 
@@ -89,49 +89,83 @@ export default class MessageController {
     const channel_db = await Channel.findBy("name", channel)
 
     // if user or channel doesnt exist
-    if(invited_user_db === null || channel_db == null) return null
+    if (invited_user_db === null || channel_db == null) return null
 
     const sender_in_channel = await Database
-    .from('channel_users')
-    .select('*')
-    .where("channel_users.user_id", userId)
-    .where("channel_users.channel_id", channel_db.id)
-    .first()
-
+      .from('channel_users')
+      .select('*')
+      .where("channel_users.user_id", userId)
+      .where("channel_users.channel_id", channel_db.id)
+      .first()
+if(sender_in_channel === null){
+  return null
+}
     // if channel is private only admin can make invites
-    if (sender_in_channel.role == UserChannelRole.USER && channel_db.type == ChannelType.PRIVATE){
+    if (sender_in_channel.role == UserChannelRole.USER && channel_db.type == ChannelType.PRIVATE) {
       return null
     }
 
-    const user_in_channel = await Database
-    .from('channel_users')
-    .select('*')
-    .where("channel_users.user_id", invited_user_db.id)
-    .where("channel_users.channel_id", channel_db.id)
-    .first()
+    if (sender_in_channel.role == UserChannelRole.USER){
 
-    if(user_in_channel === null){
+      const user_in_channel1 = await Database
+      .from('channel_users_bans')
+      .select('*')
+      .where("channel_users_bans.user_id", invited_user_db.id)
+      .where("channel_users_bans.channel_id", channel_db.id)
+      .first()
+
+    console.log(user_in_channel1)
+    if (user_in_channel1 !== null && user_in_channel1.banned_at !== null) {
+      console.log('nemozem invetnut lebo som user a on ma ban')
+      return null
+    }
+
+
+    }
+    else{
+      const user_in_channel1 = await Database
+      .from('channel_users_bans')
+      .select('*')
+      .where("channel_users_bans.user_id", invited_user_db.id)
+      .where("channel_users_bans.channel_id", channel_db.id)
+      .first()
+
+    console.log(user_in_channel1)
+    if (user_in_channel1 !== null && user_in_channel1.banned_at !== null) {
+      console.log('Bol zabanovany no odbanoval som - admin')
+      await invited_user_db.related('bans').detach([channel_db.id])
+
+    }
+    }
+    const user_in_channel = await Database
+      .from('channel_users')
+      .select('*')
+      .where("channel_users.user_id", invited_user_db.id)
+      .where("channel_users.channel_id", channel_db.id)
+      .first()
+
+    if (user_in_channel === null) {
       await invited_user_db.related('channels').attach({
         [channel_db.id]: {
           role: UserChannelRole.USER
         },
       })
 
-    const updated_channel_db = await Database
-    .from('channel_users')
-    .select('*')
-    .where("channel_users.user_id", invited_user_db.id)
-    .where("channel_users.channel_id", channel_db.id)
-    .join("channels", "channel_users.channel_id", "channels.id")
-    .first()
+      const updated_channel_db = await Database
+        .from('channel_users')
+        .select('*')
+        .where("channel_users.user_id", invited_user_db.id)
+        .where("channel_users.channel_id", channel_db.id)
+        .join("channels", "channel_users.channel_id", "channels.id")
+        .first()
 
-    // notify user about invitation
-    socket.broadcast.emit('channelInvite', updated_channel_db, invited_user_db.id)
+      // notify user about invitation
+      socket.broadcast.emit('channelInvite', updated_channel_db, invited_user_db.id)
+    }
   }
-}
 
-  public async serveCommand({ params, socket, auth }: WsContextContract, channel:string, command: string, userId: number) {
-    if (command === "/list"){
+  public async serveCommand({ params, socket, auth }: WsContextContract, channel: string, command: string, userId: number) {
+    if (command === "/list") {
       const channel_db = await Channel.findByOrFail("name", channel)
       // const users = await User.query().whereHas('channels', (query) => {query.where('channels.id', channel_db.id)})
 
@@ -205,7 +239,6 @@ export default class MessageController {
       }
     }
     else if (command.startsWith("/kick")) {
-      console.log('1')
       const channel_db = await Channel.findByOrFail("name", channel)
       const emitedUserRole = await Database.from('channel_users')
         .select('channel_users.role')
@@ -213,7 +246,6 @@ export default class MessageController {
         .where("channel_users.channel_id", channel_db.id)
         .first()
 
-        console.log('2')
       const parsedCommand = command.trim().split(" ")
 
       if (parsedCommand.length !== 2) {
@@ -222,10 +254,9 @@ export default class MessageController {
       let kickedUserName = parsedCommand[1]
       const kickedUser = await User.findBy('nickName', kickedUserName)
       console.log('hm')
-      if (kickedUser === null ){
-        console.log('return null 1')
-        return null}
-        console.log('3')
+      if (kickedUser === null) {
+        return null
+      }
       const emitedUserTable = await Database.from('channel_users')
         .select('*')
         .where("channel_users.user_id", kickedUser.id)
@@ -237,11 +268,10 @@ export default class MessageController {
       console.log(emitedUserTable)
 
 
-      if(emitedUserTable ===null){
-        console.log('2')
-        return null}
-      if(emitedUserRole.role === 'user') {
-        console.log('5')
+      if (emitedUserTable === null) {
+        return null
+      }
+      if (emitedUserRole.role === 'user') {
 
         const user_in_channel = await Database
           .from('channel_users_bans')
@@ -251,18 +281,14 @@ export default class MessageController {
           .where("channel_users_bans.channel_id", channel_db.id)
           .first()
 
-        console.log('hm1')
         if (user_in_channel === null) {
           console.log('som pri vytvarani')
           console.log(kickedUser.name + ' ' + channel_db.id)
           //await kickedUser.related('channels').attach([channel_db.id])
 
-
-
-
           await kickedUser.related('bans').attach({
             [channel_db.id]: {
-              sender_id:userId,
+              sender_id: userId,
               role: UserChannelRole.USER
 
             },
@@ -270,11 +296,11 @@ export default class MessageController {
 
 
 
-          const users_in_channel1 = await Database.rawQuery('Select * from channel_users_bans where channel_users_bans.user_id = ? AND channel_users_bans.channel_id = ?', [kickedUser.id,channel_db.id])
+          const users_in_channel1 = await Database.rawQuery('Select * from channel_users_bans where channel_users_bans.user_id = ? AND channel_users_bans.channel_id = ?', [kickedUser.id, channel_db.id])
           //const users_in_channel2 = await Database.rawQuery('Select channel_users_bans.role from channel_users_bans where channel_users_bans.user_id = ? AND channel_users_bans.channel_id = ?', [kickedUser.id,channel_db.id])
-          if(users_in_channel1.length >= 3){
+          if (users_in_channel1.length >= 3) {
 
-          await kickedUser.related('bans').sync({
+            await kickedUser.related('bans').sync({
               [channel_db.id]: {
                 banned_at: DateTime.now().toFormat('dd LLL yyyy HH:mm')
               },
@@ -282,14 +308,14 @@ export default class MessageController {
 
             console.log('treti kick - je bannuty a kicknuty')
             socket.nsp.emit('revokeChannel', channel, kickedUser.id, userId)
-        //socket.emit('leaveChannel', channel)
-        await kickedUser.related('channels').detach([channel_db.id])
+            //socket.emit('leaveChannel', channel)
+            await kickedUser.related('channels').detach([channel_db.id])
           }
           console.log('vytvoril som')
 
 
         }
-        else{console.log('uz je')}
+        else { console.log('uz je') }
 
       }
       else if (kickedUser !== null && emitedUserRole.role === 'admin') {
@@ -302,34 +328,34 @@ export default class MessageController {
           .where("channel_users_bans.channel_id", channel_db.id)
           .first()
 
-        console.log('hm1')
 
         if (user_in_channel === null) {
-        await kickedUser.related('bans').attach({
-          [channel_db.id]: {
-            sender_id:userId,
-            role: UserChannelRole.ADMIN
+          await kickedUser.related('bans').attach({
+            [channel_db.id]: {
+              sender_id: userId,
+              role: UserChannelRole.ADMIN
 
-          },
-        })
-        await kickedUser.related('bans').sync({
-          [channel_db.id]: {
-            banned_at: DateTime.now().toFormat('dd LLL yyyy HH:mm')
-          },
-        }, false)
-        socket.nsp.emit('revokeChannel', channel, kickedUser.id, userId)
-        //socket.emit('leaveChannel', channel)
-        await kickedUser.related('channels').detach([channel_db.id])}
+            },
+          })
+          await kickedUser.related('bans').sync({
+            [channel_db.id]: {
+              banned_at: DateTime.now().toFormat('dd LLL yyyy HH:mm')
+            },
+          }, false)
+          socket.nsp.emit('revokeChannel', channel, kickedUser.id, userId)
+          //socket.emit('leaveChannel', channel)
+          await kickedUser.related('channels').detach([channel_db.id])
+        }
       }
-      console.log('hm2')
-      }
+      console.log('koniec kicku')
+    }
 
 
     else if (command.startsWith("/join")) {
       let channel_type = ChannelType.PUBLIC
-
       const parsedCommand = command.trim().split(" ")
       if (parsedCommand.length < 2 || parsedCommand.length > 3) {
+
         return null
       }
       else if (parsedCommand.length === 3) {
@@ -339,13 +365,12 @@ export default class MessageController {
         channel_type = ChannelType.PRIVATE
       }
 
+
       // get user object from db
       const user = await User.findOrFail(userId)
-
       // find channel
       let channel_name = parsedCommand[1]
       const channel = await Channel.findBy("name", channel_name)
-
       // create channel and add user to it if channel doesnt exist
       let channel_db
       if (channel === null) {
@@ -353,21 +378,19 @@ export default class MessageController {
           name: channel_name,
           type: channel_type,
         })
-
         await user.related('channels').attach({
           [channel_db.id]: {
             role: UserChannelRole.ADMIN,
             joined_at: DateTime.now().toFormat('dd LLL yyyy HH:mm')
           },
         })
-
         channel_db = await Database
-        .from('channel_users')
-        .select('*')
-        .where("channel_users.user_id", user.id)
-        .where("channel_users.channel_id", channel_db.id)
-        .join("channels", "channel_users.channel_id", "channels.id")
-        .first()
+          .from('channel_users')
+          .select('*')
+          .where("channel_users.user_id", user.id)
+          .where("channel_users.channel_id", channel_db.id)
+          .join("channels", "channel_users.channel_id", "channels.id")
+          .first()
 
         // notify to join through socket
         socket.emit('joinChannel', channel_db)
@@ -375,6 +398,24 @@ export default class MessageController {
       else {
         // add user to channel if channel exists and isnt private and user isnt already in
         if (channel.type === ChannelType.PUBLIC && parsedCommand.length == 2) {
+
+
+          const user_in_channel1 = await Database
+            .from('channel_users_bans')
+            .select('*')
+            .where("channel_users_bans.user_id", user.id)
+            .where("channel_users_bans.channel_id", channel.id)
+            .first()
+
+          console.log(user_in_channel1)
+          if (user_in_channel1 !== null && user_in_channel1.banned_at !== null) {
+
+            return null
+          }
+
+
+
+
           const user_in_channel = await Database
             .from('channel_users')
             .select('*')
@@ -390,13 +431,13 @@ export default class MessageController {
               },
             })
 
-          channel_db = await Database
-          .from('channel_users')
-          .select('*')
-          .where("channel_users.user_id", user.id)
-          .where("channel_users.channel_id", channel.id)
-          .join("channels", "channel_users.channel_id", "channels.id")
-          .first()
+            channel_db = await Database
+              .from('channel_users')
+              .select('*')
+              .where("channel_users.user_id", user.id)
+              .where("channel_users.channel_id", channel.id)
+              .join("channels", "channel_users.channel_id", "channels.id")
+              .first()
 
             // notify to join through socket
             socket.emit('joinChannel', channel_db)
