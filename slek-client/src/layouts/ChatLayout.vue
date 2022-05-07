@@ -153,6 +153,7 @@
     <q-drawer width="250" v-model="rightDrawerOpen" side="right" bordered>
       <div class="column items-center">
         <q-btn
+        v-if =" activeChannel !== 'generalInformation'"
           class="q-my-md"
           style="width: 80%"
           color="primary"
@@ -222,6 +223,8 @@
     <q-footer>
         <q-toolbar class="bg-grey-1 text-black row">
     <q-input
+
+    v-if=" activeChannel "
         v-model="message"
         :disable="loading"
         @keydown.enter.prevent="send"
@@ -235,18 +238,6 @@
     >
       <template v-slot:append>
         <q-btn clas="q-ml-sm" dense flat icon="send" :disable="loading" @click="send" />
-      </template>
-
-      <template v-slot:prepend>
-        <q-btn
-          class="q-mr-sm"
-          flat
-          round
-          size="md"
-          color="primary"
-          icon="info"
-          to="/"
-        />
       </template>
     </q-input>
         </q-toolbar>
@@ -456,6 +447,7 @@ export default defineComponent({
       currentNotification: 'currentNotification'
     }),
     activeChannel () {
+      if (this.$store.state.channels.active === null) { return 'generalInformation' }
       return this.$store.state.channels.active
     },
     appVisible () {
@@ -568,10 +560,12 @@ export default defineComponent({
     },
 
     async sendTyping () {
-      await this.addTyping({
-        channel: this.activeChannel,
-        message: this.message
-      })
+      if (this.activeChannel !== 'generalInformation') {
+        await this.addTyping({
+          channel: this.activeChannel,
+          message: this.message
+        })
+      }
     },
 
     async send () {
@@ -580,23 +574,27 @@ export default defineComponent({
 
         if (this.message.startsWith('/')) {
           if (this.message === '/list') { this.usersList = true }
-          await this.serveCommand({
-            channel: this.activeChannel,
-            message: this.message,
-            userId: this.$store.state.auth.user?.id
-          })
+          if (this.message.startsWith('/join') || this.activeChannel !== 'generalInformation') {
+            await this.serveCommand({
+              channel: this.activeChannel,
+              message: this.message,
+              userId: this.$store.state.auth.user?.id
+            })
+          }
         } else {
+          if (this.activeChannel !== 'generalInformation') {
           // delete is typing
-          await this.addTyping({
-            channel: this.activeChannel,
-            message: ''
-          })
+            await this.addTyping({
+              channel: this.activeChannel,
+              message: ''
+            })
 
-          await this.addMessage({
-            channel: this.activeChannel,
-            message: this.message,
-            userId: this.$store.state.auth.user?.id
-          })
+            await this.addMessage({
+              channel: this.activeChannel,
+              message: this.message,
+              userId: this.$store.state.auth.user?.id
+            })
+          }
         }
         this.message = ''
         this.loading = false

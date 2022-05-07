@@ -79,7 +79,7 @@ export default class MessageController {
 
   public async serveInvite({ params, socket, auth }: WsContextContract, channel: string, command: string, userId: number) {
     const parsedCommand = command.trim().split(" ")
-    if (parsedCommand.length > 2) {
+    if (parsedCommand.length !== 2 ) {
       return null
     }
 
@@ -266,6 +266,9 @@ if(sender_in_channel === null){
     }
     else if (command.startsWith("/kick")) {
       const channel_db = await Channel.findByOrFail("name", channel)
+      if(channel_db.type == ChannelType.PRIVATE){
+        return null
+      }
       const emitedUserRole = await Database.from('channel_users')
         .select('channel_users.role')
         .where("channel_users.user_id", userId)

@@ -3,7 +3,8 @@ import { StateInterface } from '../index'
 import { ChannelsStateInterface } from './state'
 import { activityService, channelService, inviteService } from 'src/services'
 import { RawMessage, SerializedChannel } from 'src/contracts'
-
+import { resolveDirective } from 'vue'
+import { RouteLocationRaw } from 'vue-router'
 const actions: ActionTree<ChannelsStateInterface, StateInterface> = {
   async join ({ commit }, channel: SerializedChannel) {
     try {
@@ -111,3 +112,6 @@ const actions: ActionTree<ChannelsStateInterface, StateInterface> = {
 }
 
 export default actions
+function redirect (arg0: { path: string }) {
+  throw new Error('Function not implemented.')
+}

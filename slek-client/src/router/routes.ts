@@ -32,9 +32,9 @@ const routes: RouteRecordRaw[] = [
     children:
     [
       {
-        path: '',
+        path: '/channels/0',
         name: 'home',
-        component: () => import('src/pages/CommandsPage.vue')
+        component: () => import('src/pages/ChannelPage.vue')
       },
       {
         path: '/channels/:id',
