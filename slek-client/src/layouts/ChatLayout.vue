@@ -136,7 +136,7 @@
               v-ripple
               :to="{ name: 'Channel', params: { id: index } }"
               :active="channel.name === activeChannel"
-              @click="setActiveChannel(channel.name)"
+              @click="setActiveChannelAndRemoveTyping(channel.name)"
             >
               <q-item-section avatar>
                 <q-icon :name="getChannelTypeIcon(channel.type)" />
@@ -467,6 +467,10 @@ export default defineComponent({
       handler () {
         this.changeUserState(this.statePick)
         this.changeState(this.statePick)
+
+        if (this.statePick === 'offline') {
+          this.removeAllTypers(this.activeChannel)
+        }
       }
     },
     isReceivingAllNotifications: {
@@ -559,6 +563,21 @@ export default defineComponent({
       if (channelType === 'public') { return channelType } else if (channelType === 'private') { return 'lock' }
     },
 
+    async setActiveChannelAndRemoveTyping (channel: string) {
+      await this.addTyping({
+        channel: this.activeChannel,
+        message: ''
+      })
+
+      this.setActiveChannel(channel)
+
+      this.serveCommand({
+        channel,
+        message: '/list',
+        userId: this.$store.state.auth.user?.id
+      })
+    },
+
     async serveInviteDecision (accepted: boolean) {
       await this.handleInviteDecision({
         channel: this.invitedChannel.name,
@@ -578,6 +597,12 @@ export default defineComponent({
       if (this.message.length > 0) {
         this.loading = true
 
+        // delete is typing
+        await this.addTyping({
+          channel: this.activeChannel,
+          message: ''
+        })
+
         if (this.message.startsWith('/')) {
           if (this.message === '/list') { this.usersList = true }
           await this.serveCommand({
@@ -586,18 +611,13 @@ export default defineComponent({
             userId: this.$store.state.auth.user?.id
           })
         } else {
-          // delete is typing
-          await this.addTyping({
-            channel: this.activeChannel,
-            message: ''
-          })
-
           await this.addMessage({
             channel: this.activeChannel,
             message: this.message,
             userId: this.$store.state.auth.user?.id
           })
         }
+
         this.message = ''
         this.loading = false
       }
@@ -627,7 +647,8 @@ export default defineComponent({
 
     ...mapMutations('channels', {
       setActiveChannel: 'SET_ACTIVE',
-      setReceiveNotifications: 'SET_RECEIVE_ALL_NOTIFICATIONS'
+      setReceiveNotifications: 'SET_RECEIVE_ALL_NOTIFICATIONS',
+      removeAllTypers: 'REMOVE_ALL_TYPERS'
     }),
     ...mapActions('auth', ['logout']),
     ...mapActions('auth', ['changeUserState']),

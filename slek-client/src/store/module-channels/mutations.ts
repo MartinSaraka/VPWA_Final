@@ -60,23 +60,28 @@ const mutation: MutationTree<ChannelsStateInterface> = {
     state.isReceivingNotifications = value
   },
   RECEIVED_TYPING (state, { channel, message, userNickname }: {channel : string, message : string, userNickname : string }) {
-    if (state.typers[channel] === undefined) {
+    if (state.typers[channel] === undefined && message !== '') {
       state.typers[channel] = [{ name: userNickname, message, isOpened: false }]
     } else {
       let foundIndex = -1
-      for (let i = 0; i < state.typers[channel].length; i++) {
-        if (state.typers[channel][i].name === userNickname) {
-          state.typers[channel][i].message = message
-          foundIndex = i
-          break
+      if (state.typers[channel] !== undefined) {
+        for (let i = 0; i < state.typers[channel].length; i++) {
+          if (state.typers[channel][i].name === userNickname) {
+            state.typers[channel][i].message = message
+            foundIndex = i
+            break
+          }
         }
       }
-      if (foundIndex === -1) {
+      if (foundIndex === -1 && message !== '') {
         state.typers[channel].push({ name: userNickname, message, isOpened: false })
       } else if (message === '') {
         state.typers[channel].splice(foundIndex, 1)
       }
     }
+  },
+  REMOVE_ALL_TYPERS (state, channel : string) {
+    delete state.typers[channel]
   },
   SET_OPENED_TYPER (state, { channel, userNickname, value }: {channel : string, userNickname : string, value: boolean }) {
     for (let i = 0; i < state.typers[channel].length; i++) {

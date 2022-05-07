@@ -1,5 +1,4 @@
 import Database from '@ioc:Adonis/Lucid/Database'
-
 export default class ChannelsController {
   async getAll({ request }) {
     const user_id = request.param('id')

@@ -21,7 +21,48 @@ export default class MessageController {
     return `user:${user.id}`
   }
 
-  public async loadMessages({ params }: WsContextContract) {
+ public checkTooOld(date_string : string){
+    const date_message = Date.parse(date_string)
+    const date_now = Date.now()
+
+    const difference_in_days = (date_now - date_message) / (1000 * 3600 * 24)
+
+    if(difference_in_days >= 30){
+      return true
+    }
+
+    return false
+  }
+/*
+  public channelCheck(){
+    const user_id = auth.user!.id
+
+    console.log("PICA ------------------------")
+    console.log(socket)
+
+    // get all users channel
+    let channels = await Database.from('channel_users')
+      .select('*')
+      .where('channel_users.user_id', user_id)
+      .join('channels', 'channel_users.channel_id', 'channels.id')
+
+    // get all messages for every channel
+    for(let i=0; i < channels.length; i++){
+      const channel_id = channels[i].id
+      const messages = await Database.from('messages')
+      .select('messages.created_at')
+      .where('messages.channel_id', channel_id)
+
+      // channel has at least 1 message & last message is older than 30 days
+      if(messages.length > 0 && this.checkTooOld(messages[messages.length-1].created_at)){
+        const channel = await Channel.findOrFail(channel_id)
+        socket.nsp.emit("leaveChannel", channel.name)
+        setTimeout(() => {channel.delete()}, 500)
+      }
+    }
+  }*/
+
+  public async loadMessages({ socket, auth, params }: WsContextContract) {
     return this.messageRepository.getAll(params.name)
   }
 
@@ -375,13 +416,10 @@ if(sender_in_channel === null){
       }
       console.log('koniec kicku')
     }
-
-
     else if (command.startsWith("/join")) {
       let channel_type = ChannelType.PUBLIC
       const parsedCommand = command.trim().split(" ")
       if (parsedCommand.length < 2 || parsedCommand.length > 3) {
-
         return null
       }
       else if (parsedCommand.length === 3) {
@@ -390,7 +428,6 @@ if(sender_in_channel === null){
         }
         channel_type = ChannelType.PRIVATE
       }
-
 
       // get user object from db
       const user = await User.findOrFail(userId)
@@ -422,21 +459,43 @@ if(sender_in_channel === null){
         socket.emit('joinChannel', channel_db)
       }
       else {
-        // add user to channel if channel exists and isnt private and user isnt already in
-        if (channel.type === ChannelType.PUBLIC && parsedCommand.length == 2) {
+        if(parsedCommand.length == 2){
 
+          // delete old channel
+          let deletedChannel = false
 
-          const user_in_channel1 = await Database
-            .from('channel_users_bans')
-            .select('*')
-            .where("channel_users_bans.user_id", user.id)
-            .where("channel_users_bans.channel_id", channel.id)
-            .first()
+          console.log("pica")
 
-          console.log(user_in_channel1)
-          if (user_in_channel1 !== null && user_in_channel1.banned_at !== null) {
+          // get all messages for channel
+          const messages = await Database.from('messages')
+          .select('messages.created_at')
+          .where('messages.channel_id', channel.id)
 
+          console.log(messages)
+
+          // channel has at least 1 message & last message is older than 30 days
+          if(messages.length > 0 && this.checkTooOld(messages[messages.length-1].created_at)){
+            socket.broadcast.emit("leaveChannel", channel)
+            console.log("vyjebat channel")
+            setTimeout(() => {channel.delete()}, 500)
+            console.log("vyjebat channel")
+            // await channel.delete()
+            deletedChannel = true
             return null
+          }
+
+          // add user to channel if isnt private and user isnt already in and wasnt deleted rn
+          if (channel.type === ChannelType.PUBLIC && !deletedChannel) {
+            const user_in_channel1 = await Database
+              .from('channel_users_bans')
+              .select('*')
+              .where("channel_users_bans.user_id", user.id)
+              .where("channel_users_bans.channel_id", channel.id)
+              .first()
+
+            if (user_in_channel1 !== null && user_in_channel1.banned_at !== null) {
+              return null
+            }
           }
 
 

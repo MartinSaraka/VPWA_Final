@@ -22,6 +22,7 @@ class ChannelSocketManager extends SocketManager {
     })
 
     this.socket.on('leaveChannel', (channel: string) => {
+      alert("leavni channel " + channel)
       store.commit('channels/CLEAR_CHANNEL', channel)
     })
 
@@ -40,7 +41,9 @@ class ChannelSocketManager extends SocketManager {
     })
 
     this.socket.on('typing', (channel: string, message: string, userNickname: string) => {
-      store.dispatch('channels/receivedTyping', { channel, message, userNickname })
+      if (store.state.auth.user?.currentState !== 'offline') {
+        store.dispatch('channels/receivedTyping', { channel, message, userNickname })
+      }
     })
   }
 
