@@ -27,7 +27,10 @@
       :name=typer.name
       :avatar="getAvatar(typer.name)"
     >
-      <div>
+      <div
+      >
+      <div v-if="activeChannel === 'generalInformation' "> <CommandsPage></CommandsPage> </div>
+
         <q-btn outline class="q-mr-sm" @click="setOpenedTyper({channel: activeChannel, userNickname: typer.name, value: true})">{{typer.name}}</q-btn> is typing
         <q-spinner-dots class="q-ml-sm" size="2rem" />
 
@@ -57,7 +60,6 @@ import { QScrollArea } from 'quasar'
 import { SerializedMessage, TyperWithMessage } from 'src/contracts'
 import { defineComponent, PropType } from 'vue'
 import { mapMutations } from 'vuex'
-
 export default defineComponent({
   data () {
     return {
@@ -99,7 +101,11 @@ export default defineComponent({
     },
     taggedMessage (message: any) {
       const taggedUser = '@' + this.$store.state.auth.user?.nickName
-      if (message.includes(taggedUser)) { return true } else { return false }
+      if (message.includes(taggedUser)) {
+        return true
+      } else {
+        return false
+      }
     },
     red () {
       return 'red'
@@ -117,12 +123,16 @@ export default defineComponent({
     onLoad (index: number, done: (arg0: boolean) => void) {
       setTimeout(() => {
         let isDone = false
-        if (this.temporaryMessages.length + 5 >= this.messages.length) { this.temporaryMessages = this.messages; isDone = true } else {
+        if (this.temporaryMessages.length + 5 >= this.messages.length) {
+          this.temporaryMessages = this.messages
+          isDone = true
+        } else {
           this.temporaryMessages = this.messages.slice(-this.messageGeneratedNumber)
           this.messageGeneratedNumber = this.messageGeneratedNumber + 5
         }
-        if (this.messages.length === this.temporaryMessages.length) { isDone = true }
-
+        if (this.messages.length === this.temporaryMessages.length) {
+          isDone = true
+        }
         done(isDone)
       }, 2000)
     },

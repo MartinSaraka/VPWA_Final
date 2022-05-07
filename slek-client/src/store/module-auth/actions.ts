@@ -33,6 +33,7 @@ const actions: ActionTree<AuthStateInterface, StateInterface> = {
       return user
     } catch (err) {
       commit('AUTH_ERROR', err)
+      alert('Zle zadané údaje, skontrolujte či máte správne email a heslo musí mať minimalne 8 znakov')
       throw err
     }
   },
@@ -46,6 +47,7 @@ const actions: ActionTree<AuthStateInterface, StateInterface> = {
       return apiToken
     } catch (err) {
       commit('AUTH_ERROR', err)
+      alert('Nesprávne zadané údaje')
       throw err
     }
   },

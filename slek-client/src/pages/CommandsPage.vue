@@ -1,6 +1,6 @@
 <template>
   <div class="q-py-sm">
-    <q-list separator class="shadow-5">
+    <q-list v-if="activeChannel ==='generalInformation' || activeChannel ===null" separator class="shadow-5">
       <q-item class="q-mb-sm" v-for="(command, index) in commands" :key="index" >
 
         <q-item-section avatar>
@@ -43,6 +43,14 @@ export default defineComponent({
     return {
       commands
     }
+  },
+  computed: {
+
+    activeChannel () {
+      alert('U can use only join in generalInformation channel')
+      return this.$store.state.channels.active
+    }
   }
-})
+}
+)
 </script>
