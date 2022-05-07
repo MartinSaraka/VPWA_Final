@@ -77,6 +77,11 @@ export default class ActivityController {
       user.state = 'dnd'
       user?.save()
     }
+    else{
+      const user = await User.findOrFail(auth.user?.id)
+      user.state = null
+      user?.save()
+    }
     socket.nsp.emit('user:stateChange', auth.user, state)
   }
 }
