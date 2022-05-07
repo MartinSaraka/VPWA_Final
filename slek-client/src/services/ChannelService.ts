@@ -23,7 +23,6 @@ class ChannelSocketManager extends SocketManager {
     })
 
     this.socket.on('leaveChannel', (channel: string) => {
-      alert(channel)
       channelService.leave(channel)
       store.commit('channels/CLEAR_CHANNEL', channel)
     })
