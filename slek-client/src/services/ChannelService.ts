@@ -1,6 +1,7 @@
 import { RawMessage, SerializedChannel, SerializedMessage, User } from 'src/contracts'
 import { BootParams, SocketManager } from './SocketManager'
 import { api } from 'src/boot/axios'
+import { channelService } from '.'
 
 // creating instance of this class automatically connects to given socket.io namespace
 // subscribe is called with boot params, so you can use it to dispatch actions for socket events
@@ -22,7 +23,8 @@ class ChannelSocketManager extends SocketManager {
     })
 
     this.socket.on('leaveChannel', (channel: string) => {
-      alert("leavni channel " + channel)
+      alert(channel)
+      channelService.leave(channel)
       store.commit('channels/CLEAR_CHANNEL', channel)
     })
 

@@ -33,36 +33,30 @@ export default class MessageController {
 
     return false
   }
-/*
-  public channelCheck(){
+
+  public async loadMessages({ socket, auth, params }: WsContextContract) {
     const user_id = auth.user!.id
-
-    console.log("PICA ------------------------")
-    console.log(socket)
-
-    // get all users channel
     let channels = await Database.from('channel_users')
       .select('*')
       .where('channel_users.user_id', user_id)
       .join('channels', 'channel_users.channel_id', 'channels.id')
 
-    // get all messages for every channel
     for(let i=0; i < channels.length; i++){
       const channel_id = channels[i].id
       const messages = await Database.from('messages')
       .select('messages.created_at')
       .where('messages.channel_id', channel_id)
 
-      // channel has at least 1 message & last message is older than 30 days
-      if(messages.length > 0 && this.checkTooOld(messages[messages.length-1].created_at)){
-        const channel = await Channel.findOrFail(channel_id)
-        socket.nsp.emit("leaveChannel", channel.name)
-        setTimeout(() => {channel.delete()}, 500)
+      // channel has no messages and is older than 30 days OR last message is older than 30 days
+      if( (messages.length === 0 && this.checkTooOld(channels[i].created_at) ) ||
+          (messages.length > 0 && this.checkTooOld(messages[messages.length-1].created_at))
+        ){
+          const channel = await Channel.findOrFail(channel_id)
+          socket.nsp.emit("leaveChannel", channel.name)
+          await channel.delete()
       }
     }
-  }*/
 
-  public async loadMessages({ socket, auth, params }: WsContextContract) {
     return this.messageRepository.getAll(params.name)
   }
 
@@ -462,74 +456,45 @@ if(sender_in_channel === null){
         socket.emit('joinChannel', channel_db)
       }
       else {
-        if(parsedCommand.length == 2){
-
-          // delete old channel
-          let deletedChannel = false
-
-          console.log("pica")
-
-          // get all messages for channel
-          const messages = await Database.from('messages')
-          .select('messages.created_at')
-          .where('messages.channel_id', channel.id)
-
-          console.log(messages)
-
-          // channel has at least 1 message & last message is older than 30 days
-          if(messages.length > 0 && this.checkTooOld(messages[messages.length-1].created_at)){
-            socket.broadcast.emit("leaveChannel", channel)
-            console.log("vyjebat channel")
-            setTimeout(() => {channel.delete()}, 500)
-            console.log("vyjebat channel")
-            // await channel.delete()
-            deletedChannel = true
-            return null
-          }
-
-          // add user to channel if isnt private and user isnt already in and wasnt deleted rn
-          if (channel.type === ChannelType.PUBLIC && !deletedChannel) {
-            const user_in_channel1 = await Database
-              .from('channel_users_bans')
-              .select('*')
-              .where("channel_users_bans.user_id", user.id)
-              .where("channel_users_bans.channel_id", channel.id)
-              .first()
-
-            if (user_in_channel1 !== null && user_in_channel1.banned_at !== null) {
-              return null
-            }
-          }
-
-
-
-
-          const user_in_channel = await Database
-            .from('channel_users')
+        // add user to channel if isnt private and user isnt already in
+        if (parsedCommand.length == 2 && channel.type === ChannelType.PUBLIC) {
+          const user_in_channel1 = await Database
+            .from('channel_users_bans')
             .select('*')
-            .where("channel_users.user_id", userId)
-            .where("channel_users.channel_id", channel.id)
+            .where("channel_users_bans.user_id", user.id)
+            .where("channel_users_bans.channel_id", channel.id)
             .first()
 
-          if (user_in_channel === null) {
-            await user.related('channels').attach({
-              [channel.id]: {
-                role: UserChannelRole.USER,
-                joined_at: DateTime.now().toFormat('dd LLL yyyy HH:mm')
-              },
-            })
-
-            channel_db = await Database
-              .from('channel_users')
-              .select('*')
-              .where("channel_users.user_id", user.id)
-              .where("channel_users.channel_id", channel.id)
-              .join("channels", "channel_users.channel_id", "channels.id")
-              .first()
-
-            // notify to join through socket
-            socket.emit('joinChannel', channel_db)
+          if (user_in_channel1 !== null && user_in_channel1.banned_at !== null) {
+            return null
           }
+        }
+
+        const user_in_channel = await Database
+          .from('channel_users')
+          .select('*')
+          .where("channel_users.user_id", userId)
+          .where("channel_users.channel_id", channel.id)
+          .first()
+
+        if (user_in_channel === null) {
+          await user.related('channels').attach({
+            [channel.id]: {
+              role: UserChannelRole.USER,
+              joined_at: DateTime.now().toFormat('dd LLL yyyy HH:mm')
+            },
+          })
+
+          channel_db = await Database
+            .from('channel_users')
+            .select('*')
+            .where("channel_users.user_id", user.id)
+            .where("channel_users.channel_id", channel.id)
+            .join("channels", "channel_users.channel_id", "channels.id")
+            .first()
+
+          // notify to join through socket
+          socket.emit('joinChannel', channel_db)
         }
       }
     }

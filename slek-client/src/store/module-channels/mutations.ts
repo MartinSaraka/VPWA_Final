@@ -72,11 +72,12 @@ const mutation: MutationTree<ChannelsStateInterface> = {
             break
           }
         }
-      }
-      if (foundIndex === -1 && message !== '') {
-        state.typers[channel].push({ name: userNickname, message, isOpened: false })
-      } else if (message === '') {
-        state.typers[channel].splice(foundIndex, 1)
+
+        if (foundIndex === -1 && message !== '') {
+          state.typers[channel].push({ name: userNickname, message, isOpened: false })
+        } else if (message === '') {
+          state.typers[channel].splice(foundIndex, 1)
+        }
       }
     }
   },
