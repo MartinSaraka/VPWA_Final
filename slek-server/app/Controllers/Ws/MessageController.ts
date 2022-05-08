@@ -284,8 +284,12 @@ if(sender_in_channel === null){
       if (parsedCommand.length !== 2) {
         return null
       }
+      if (channel_db.type !== ChannelType.PRIVATE) {
+        return null
+      }
       let revokingUserName = parsedCommand[1]
       const revokingUser = await User.findBy('nickName', revokingUserName)
+      console.log(revokingUser + emitedUserRole.role)
       if (revokingUser !== null && emitedUserRole.role === 'user') {
         return null
       } else if (revokingUser !== null && emitedUserRole.role === 'admin') {
@@ -332,7 +336,7 @@ if(sender_in_channel === null){
       console.log(emitedUserTable)
 
 
-      if (emitedUserTable === null) {
+      if (emitedUserTable === null || emitedUserTable.role === 'admin') {
         return null
       }
       if (emitedUserRole.role === 'user') {
@@ -428,6 +432,7 @@ if(sender_in_channel === null){
 
       // get user object from db
       const user = await User.findOrFail(userId)
+
       // find channel
       let channel_name = parsedCommand[1]
       const channel = await Channel.findBy("name", channel_name)
@@ -468,7 +473,7 @@ if(sender_in_channel === null){
           if (user_in_channel1 !== null && user_in_channel1.banned_at !== null) {
             return null
           }
-        }
+
 
         const user_in_channel = await Database
           .from('channel_users')
@@ -495,6 +500,8 @@ if(sender_in_channel === null){
 
           // notify to join through socket
           socket.emit('joinChannel', channel_db)
+
+           }
         }
       }
     }
